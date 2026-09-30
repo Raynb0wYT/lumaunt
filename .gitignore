@@ -1,0 +1,66 @@
+# ==============================
+# macOS
+# ==============================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+
+# ==============================
+# Xcode
+# ==============================
+
+DerivedData/
+build/
+
+*.xcuserstate
+xcuserdata/
+
+*.xccheckout
+*.xcscmblueprint
+
+# Xcode archives
+*.xcarchive
+
+
+# ==============================
+# Swift Package Manager
+# ==============================
+
+.build/
+.swiftpm/
+
+
+# ==============================
+# Discord Social SDK
+# Download separately; do not commit the framework binary
+# ==============================
+
+**/discord_partner_sdk.framework/
+
+
+# ==============================
+# Secrets / Environment
+# ==============================
+
+.env
+.env.*
+!.env.example
+
+*.pem
+*.p12
+*.cer
+*.mobileprovision
+
+# Local secret/config files
+Secrets.swift
+secrets.json
+
+
+# ==============================
+# Miscellaneous
+# ==============================
+
+*.log
+*.tmp

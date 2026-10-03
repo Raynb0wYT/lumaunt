@@ -5,6 +5,12 @@ struct PresencePreviewView: View {
     let presence: PresenceConfiguration
 
     @State private var currentTime = Date()
+    @State private var hoveredArtwork: HoveredArtwork?
+
+    private enum HoveredArtwork {
+        case large
+        case small
+    }
 
     private let timer = Timer.publish(
         every: 1,
@@ -71,7 +77,7 @@ struct PresencePreviewView: View {
                             )
                             .font(.system(size: 11))
 
-                            Text(elapsedTimeText)
+                            Text(timerText)
                                 .monospacedDigit()
                         }
                         .font(.system(size: 13))
@@ -80,6 +86,64 @@ struct PresencePreviewView: View {
                     }
 
                     Spacer(minLength: 0)
+                }
+
+                if !presence.buttons.isEmpty {
+                    VStack(spacing: 6) {
+                        ForEach(
+                            Array(
+                                presence.buttons
+                                    .prefix(2)
+                                    .enumerated()
+                            ),
+                            id: \.offset
+                        ) { _, button in
+                            if !button.label
+                                .trimmingCharacters(
+                                    in: .whitespacesAndNewlines
+                                )
+                                .isEmpty {
+
+                                HStack {
+                                    Spacer()
+
+                                    Text(button.label)
+                                        .font(
+                                            .system(
+                                                size: 13,
+                                                weight: .medium
+                                            )
+                                        )
+                                        .lineLimit(1)
+
+                                    Spacer()
+                                }
+                                .frame(height: 32)
+                                .background {
+                                    RoundedRectangle(
+                                        cornerRadius: 4,
+                                        style: .continuous
+                                    )
+                                    .fill(
+                                        Color.secondary
+                                            .opacity(0.14)
+                                    )
+                                }
+                                .overlay {
+                                    RoundedRectangle(
+                                        cornerRadius: 4,
+                                        style: .continuous
+                                    )
+                                    .stroke(
+                                        Color.secondary
+                                            .opacity(0.12),
+                                        lineWidth: 1
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    .padding(.top, 2)
                 }
             }
             .padding(14)
@@ -101,6 +165,8 @@ struct PresencePreviewView: View {
     private var artwork: some View {
         ZStack(alignment: .bottomTrailing) {
 
+            // MARK: Large Artwork
+
             largeArtwork
                 .frame(
                     width: 90,
@@ -112,6 +178,12 @@ struct PresencePreviewView: View {
                         style: .continuous
                     )
                 )
+                .accessibilityLabel("Large image")
+                .accessibilityValue(
+                    presence.largeImageText
+                )
+
+            // MARK: Small Artwork
 
             if !presence.smallImage.isEmpty {
                 smallArtwork
@@ -123,7 +195,10 @@ struct PresencePreviewView: View {
                     .overlay {
                         Circle()
                             .stroke(
-                                Color(nsColor: .windowBackgroundColor),
+                                Color(
+                                    nsColor:
+                                        .windowBackgroundColor
+                                ),
                                 lineWidth: 3
                             )
                     }
@@ -131,6 +206,56 @@ struct PresencePreviewView: View {
                         x: 4,
                         y: 4
                     )
+                    .accessibilityLabel("Small image")
+                    .accessibilityValue(
+                        presence.smallImageText
+                    )
+            }
+
+            // MARK: Stable Hover Regions
+
+            RoundedRectangle(
+                cornerRadius: 10,
+                style: .continuous
+            )
+            .fill(Color.clear)
+            .contentShape(
+                RoundedRectangle(
+                    cornerRadius: 10,
+                    style: .continuous
+                )
+            )
+            .frame(
+                width: 90,
+                height: 90
+            )
+            .onHover { isHovering in
+                if isHovering {
+                    hoveredArtwork = .large
+                } else if hoveredArtwork == .large {
+                    hoveredArtwork = nil
+                }
+            }
+
+            if !presence.smallImage.isEmpty {
+                Circle()
+                    .fill(Color.clear)
+                    .contentShape(Circle())
+                    .frame(
+                        width: 28,
+                        height: 28
+                    )
+                    .offset(
+                        x: 4,
+                        y: 4
+                    )
+                    .onHover { isHovering in
+                        if isHovering {
+                            hoveredArtwork = .small
+                        } else if hoveredArtwork == .small {
+                            hoveredArtwork = nil
+                        }
+                    }
             }
         }
         .frame(
@@ -138,6 +263,80 @@ struct PresencePreviewView: View {
             height: 94,
             alignment: .topLeading
         )
+        .overlay(
+            alignment: .top
+        ) {
+            if let tooltipText = hoveredTooltipText {
+                artworkTooltip(tooltipText)
+                    .fixedSize()
+                    .offset(y: -38)
+                    .allowsHitTesting(false)
+            }
+        }
+    }
+
+    // MARK: - Hover Tooltip
+
+    private var hoveredTooltipText: String? {
+        let text: String
+
+        switch hoveredArtwork {
+        case .large:
+            text = presence.largeImageText
+
+        case .small:
+            text = presence.smallImageText
+
+        case nil:
+            return nil
+        }
+
+        let trimmed = text.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    private func artworkTooltip(
+        _ text: String
+    ) -> some View {
+        Text(text)
+            .font(
+                .system(
+                    size: 12,
+                    weight: .medium
+                )
+            )
+            .foregroundStyle(.white)
+            .lineLimit(2)
+            .multilineTextAlignment(.center)
+            .fixedSize(
+                horizontal: false,
+                vertical: true
+            )
+            .frame(maxWidth: 180)
+            .padding(
+                .horizontal,
+                9
+            )
+            .padding(
+                .vertical,
+                6
+            )
+            .background {
+                RoundedRectangle(
+                    cornerRadius: 5,
+                    style: .continuous
+                )
+                .fill(
+                    Color.black.opacity(0.92)
+                )
+            }
+            .shadow(
+                radius: 4,
+                y: 2
+            )
     }
 
     // MARK: - Large Image
@@ -146,7 +345,20 @@ struct PresencePreviewView: View {
     private var largeArtwork: some View {
         if let url = imageURL(
             from: presence.largeImage
+        ),
+           url.isFileURL,
+           let image = NSImage(
+            contentsOf: url
+           ) {
+
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFill()
+
+        } else if let url = imageURL(
+            from: presence.largeImage
         ) {
+
             AsyncImage(url: url) { phase in
                 switch phase {
 
@@ -176,6 +388,7 @@ struct PresencePreviewView: View {
                     )
                 }
             }
+
         } else {
             imagePlaceholder(
                 systemName: "questionmark"
@@ -189,7 +402,20 @@ struct PresencePreviewView: View {
     private var smallArtwork: some View {
         if let url = imageURL(
             from: presence.smallImage
+        ),
+           url.isFileURL,
+           let image = NSImage(
+            contentsOf: url
+           ) {
+
+            Image(nsImage: image)
+                .resizable()
+                .scaledToFill()
+
+        } else if let url = imageURL(
+            from: presence.smallImage
         ) {
+
             AsyncImage(url: url) { phase in
                 switch phase {
 
@@ -218,6 +444,7 @@ struct PresencePreviewView: View {
                         .fill(.quaternary)
                 }
             }
+
         } else {
             Circle()
                 .fill(.quaternary)
@@ -250,17 +477,19 @@ struct PresencePreviewView: View {
     private func imageURL(
         from value: String
     ) -> URL? {
-        let trimmed = value.trimmingCharacters(
-            in: .whitespacesAndNewlines
-        )
+        let trimmed = value
+            .trimmingCharacters(
+                in: .whitespacesAndNewlines
+            )
 
         guard
             !trimmed.isEmpty,
             let url = URL(string: trimmed),
-            let scheme = url.scheme?.lowercased(),
+            let scheme =
+                url.scheme?.lowercased(),
             scheme == "http" ||
-            scheme == "https" ||
-            scheme == "file"
+                scheme == "https" ||
+                scheme == "file"
         else {
             return nil
         }
@@ -270,35 +499,96 @@ struct PresencePreviewView: View {
 
     // MARK: - Timer
 
+    private var timerText: String {
+        switch presence.timerMode {
+
+        case .elapsed:
+            return elapsedTimeText
+
+        case .countdown:
+            return countdownTimeText
+        }
+    }
+
     private var elapsedTimeText: String {
-        guard let start = presence.startTimestamp else {
-            return "0:00"
+        guard let start =
+            presence.customStartTime ?? presence.startTimestamp
+        else {
+            return "0:00 elapsed"
         }
 
         let elapsed = max(
             0,
             Int(
-                currentTime.timeIntervalSince(start)
+                currentTime
+                    .timeIntervalSince(start)
             )
         )
 
-        let hours = elapsed / 3600
-        let minutes = (elapsed % 3600) / 60
-        let seconds = elapsed % 60
+        return formattedTime(
+            seconds: elapsed,
+            suffix: "elapsed"
+        )
+    }
 
-        if hours > 0 {
-            return String(
-                format: "%d:%02d:%02d",
-                hours,
-                minutes,
-                seconds
+    private var countdownTimeText: String {
+        let remaining: Int
+
+        if let end =
+            presence.endTimestamp {
+
+            remaining = max(
+                0,
+                Int(
+                    end.timeIntervalSince(
+                        currentTime
+                    )
+                )
+            )
+
+        } else {
+            remaining = max(
+                0,
+                Int(
+                    presence
+                        .countdownDuration
+                )
             )
         }
 
-        return String(
-            format: "%d:%02d",
-            minutes,
-            seconds
+        return formattedTime(
+            seconds: remaining,
+            suffix: "remaining"
         )
+    }
+
+    private func formattedTime(
+        seconds: Int,
+        suffix: String
+    ) -> String {
+        let hours = seconds / 3600
+        let minutes =
+            (seconds % 3600) / 60
+        let remainingSeconds =
+            seconds % 60
+
+        let time: String
+
+        if hours > 0 {
+            time = String(
+                format: "%d:%02d:%02d",
+                hours,
+                minutes,
+                remainingSeconds
+            )
+        } else {
+            time = String(
+                format: "%d:%02d",
+                minutes,
+                remainingSeconds
+            )
+        }
+
+        return "\(time) \(suffix)"
     }
 }

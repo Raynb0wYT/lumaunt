@@ -27,9 +27,13 @@ final class PresetStore {
     }
 
     func savePreset(name: String, configuration: PresenceConfiguration) {
+        var presetConfiguration = configuration
+        presetConfiguration.startTimestamp = nil
+        presetConfiguration.endTimestamp = nil
+
         let preset = PresencePreset(
             name: name,
-            configuration: configuration
+            configuration: presetConfiguration
         )
 
         presets.append(preset)
@@ -38,6 +42,53 @@ final class PresetStore {
 
     func deletePreset(_ preset: PresencePreset) {
         presets.removeAll { $0.id == preset.id }
+        save()
+    }
+
+    func renamePreset(
+        _ preset: PresencePreset,
+        to newName: String
+    ) {
+        let cleanedName = newName.trimmingCharacters(
+            in: .whitespacesAndNewlines
+        )
+
+        guard !cleanedName.isEmpty else {
+            return
+        }
+
+        guard let index = presets.firstIndex(
+            where: { $0.id == preset.id }
+        ) else {
+            return
+        }
+
+        presets[index].name = cleanedName
+        save()
+    }
+
+
+    func duplicatePreset(
+        _ preset: PresencePreset
+    ) {
+        let duplicate = PresencePreset(
+            name: "\(preset.name) Copy",
+            configuration: preset.configuration
+        )
+
+        guard let index = presets.firstIndex(
+            where: { $0.id == preset.id }
+        ) else {
+            presets.append(duplicate)
+            save()
+            return
+        }
+
+        presets.insert(
+            duplicate,
+            at: index + 1
+        )
+
         save()
     }
 

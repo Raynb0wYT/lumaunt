@@ -1,0 +1,65 @@
+{
+  "$schema": "https://raw.githubusercontent.com/cloudflare/workers-sdk/main/packages/wrangler/config-schema.json",
+  "name": "lumaunt-api",
+  "main": "worker.js",
+  "account_id": "8e92b2431ee377cf42fed1ceb365b8a2",
+  "compatibility_date": "2026-09-28",
+  "workers_dev": true,
+  "routes": [
+    {
+      "pattern": "api.lumaunt.app",
+      "custom_domain": true
+    }
+  ],
+  "ai": {
+    "binding": "AI"
+  },
+  "r2_buckets": [
+    {
+      "binding": "IMAGES",
+      "bucket_name": "lumaunt-images"
+    }
+  ],
+  "triggers": {
+    "crons": [
+      "0 4 * * *"
+    ]
+  },
+  "observability": {
+    "enabled": true
+  },
+  "ratelimits": [
+    {
+      "name": "UPLOAD_RATE_LIMITER",
+      "namespace_id": "9272601",
+      "simple": {
+        "limit": 20,
+        "period": 60
+      }
+    },
+    {
+      "name": "UPLOAD_IP_RATE_LIMITER",
+      "namespace_id": "9272602",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    },
+    {
+      "name": "MODERATION_RATE_LIMITER",
+      "namespace_id": "9272603",
+      "simple": {
+        "limit": 60,
+        "period": 60
+      }
+    },
+    {
+      "name": "DELETE_RATE_LIMITER",
+      "namespace_id": "9272604",
+      "simple": {
+        "limit": 120,
+        "period": 60
+      }
+    }
+  ]
+}

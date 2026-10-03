@@ -4,6 +4,7 @@ struct UploadedImage: Codable, Equatable {
     let id: String
     let key: String
     let url: URL
+    var expiresAt: Double? = nil
 }
 
 enum ImageUploadError: LocalizedError {
@@ -40,7 +41,7 @@ final class ImageUploadService {
     // TEMPORARY development endpoint.
     // Later this becomes https://api.lumaunt.app
     private let apiBaseURL = URL(
-        string: "https://lumaunt-api.liam-e92.workers.dev"
+        string: "https://api.lumaunt.app"
     )!
 
     private let maximumFileSize = 5 * 1024 * 1024
@@ -48,19 +49,26 @@ final class ImageUploadService {
 
     // MARK: - Upload
 
+    @MainActor
     func upload(
         fileURL: URL
     ) async throws -> UploadedImage {
 
+        guard ImagePrivacySettings.uploadsAllowed else {
+            throw ImageUploadError.serverError("Allow hosted image uploads in Image Privacy before applying a local image, or use an existing image URL.")
+        }
         guard fileURL.isFileURL else {
             throw ImageUploadError.invalidFile
         }
-
+        try ImageValidator.validateDimensions(
+            of: fileURL
+        )
         // Check whether these exact image bytes
         // have already been uploaded.
         if let cachedImage = try uploadCache.uploadedImage(
             for: fileURL
-        ) {
+        ), let expiration = cachedImage.expiresAt,
+           expiration > Date().timeIntervalSince1970 * 1000 + 60_000 {
             print(
                 "Reusing cached image:",
                 cachedImage.url.absoluteString
@@ -70,7 +78,7 @@ final class ImageUploadService {
         }
 
         let didAccess =
-            fileURL.startAccessingSecurityScopedResource()
+        fileURL.startAccessingSecurityScopedResource()
 
         defer {
             if didAccess {
@@ -78,30 +86,28 @@ final class ImageUploadService {
             }
         }
 
-        let data: Data
+        let optimizedImage: OptimizedImage
 
         do {
-            data = try Data(
-                contentsOf: fileURL
+            optimizedImage = try ImageOptimizer.optimize(
+                fileURL: fileURL
             )
         } catch {
+            throw error
+        }
+
+        guard !optimizedImage.data.isEmpty else {
             throw ImageUploadError.invalidFile
         }
 
-        guard !data.isEmpty else {
-            throw ImageUploadError.invalidFile
-        }
-
-        guard data.count <= maximumFileSize else {
+        guard optimizedImage.data.count <= maximumFileSize else {
             throw ImageUploadError.fileTooLarge
         }
 
-        let contentType = try contentType(
-            for: fileURL
-        )
-
+        let data = optimizedImage.data
+        let contentType = optimizedImage.contentType
         let uploadURL = apiBaseURL
-            .appendingPathComponent("images")
+            .appendingPathComponent("v2/images")
             .appendingPathComponent("upload")
 
         var request = URLRequest(
@@ -115,6 +121,8 @@ final class ImageUploadService {
             forHTTPHeaderField: "Content-Type"
         )
 
+        request.setValue(try ImagePrivacySettings.ownerToken(), forHTTPHeaderField: "X-Lumaunt-Owner")
+        request.setValue(String(ImagePrivacySettings.retentionDays), forHTTPHeaderField: "X-Lumaunt-Retention-Days")
         request.httpBody = data
 
         let responseData: Data
@@ -122,16 +130,16 @@ final class ImageUploadService {
 
         do {
             (responseData, response) =
-                try await URLSession.shared.data(
-                    for: request
-                )
+            try await URLSession.shared.data(
+                for: request
+            )
         } catch {
             throw error
         }
 
         guard let httpResponse =
                 response as? HTTPURLResponse
-        else {
+                else {
             throw ImageUploadError.invalidResponse
         }
 
@@ -157,11 +165,15 @@ final class ImageUploadService {
 
         do {
             let uploadedImage =
-                try JSONDecoder().decode(
-                    UploadedImage.self,
-                    from: responseData
-                )
+            try JSONDecoder().decode(
+                UploadedImage.self,
+                from: responseData
+            )
 
+            guard uploadedImage.expiresAt != nil else {
+                throw ImageUploadError.serverError("The image backend needs the privacy update before new images can be uploaded.")
+            }
+            try HostedImageStore.shared.record(uploadedImage)
             try uploadCache.store(
                 uploadedImage,
                 for: fileURL
@@ -183,32 +195,23 @@ final class ImageUploadService {
     }
 
 
-    // MARK: - Content Type
-
-    private func contentType(
-        for url: URL
-    ) throws -> String {
-
-        switch url.pathExtension.lowercased() {
-
-        case "png":
-            return "image/png"
-
-        case "jpg", "jpeg":
-            return "image/jpeg"
-
-        case "webp":
-            return "image/webp"
-
-        default:
-            throw ImageUploadError.unsupportedImageType
+    @MainActor
+    func delete(image: ManagedImage) async throws {
+        var request = URLRequest(url: apiBaseURL.appendingPathComponent("v2/images/delete"))
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(try ImagePrivacySettings.ownerToken(), forHTTPHeaderField: "X-Lumaunt-Owner")
+        request.httpBody = try JSONEncoder().encode(["key": image.key])
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let http = response as? HTTPURLResponse else { throw ImageUploadError.invalidResponse }
+        guard (200...299).contains(http.statusCode) else {
+            throw ImageUploadError.serverError((try? JSONDecoder().decode(ServerErrorResponse.self, from: data).error) ?? "The image server could not delete this image.")
         }
     }
-}
 
+    // MARK: - Server Error Response
 
-// MARK: - Server Error Response
-
-private struct ServerErrorResponse: Codable {
-    let error: String
+    private struct ServerErrorResponse: Codable {
+        let error: String
+    }
 }

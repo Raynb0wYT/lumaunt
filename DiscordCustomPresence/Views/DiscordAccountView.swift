@@ -70,6 +70,7 @@ struct DiscordAccountView: View {
                     }
                     .frame(width: 36, height: 36)
                     .clipShape(Circle())
+                    .accessibilityHidden(true)
 
                     Circle()
                         .fill(.green)

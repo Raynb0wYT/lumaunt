@@ -117,49 +117,42 @@ void discord_bridge_authorize(
     DiscordBridgeAuthCallback callback
 ) {
     if (g_client == nullptr) {
-
         if (callback != nullptr) {
             callback(
                 0,
                 "Discord client is not initialized.",
-                nullptr
+                nullptr,
+                nullptr,
+                0
             );
         }
 
         return;
     }
 
-
     printf(
         "[DiscordBridge] Starting OAuth...\n"
     );
 
-
     auto verifier =
         g_client->CreateAuthorizationCodeVerifier();
 
-
     discordpp::AuthorizationArgs args;
-
 
     args.SetClientId(
         application_id
     );
 
-
     args.SetScopes(
         discordpp::Client::GetDefaultPresenceScopes()
     );
-
 
     args.SetCodeChallenge(
         verifier.Challenge()
     );
 
-
     std::string codeVerifier =
         verifier.Verifier();
-
 
     g_client->Authorize(
         args,
@@ -177,35 +170,31 @@ void discord_bridge_authorize(
             // MARK: Authorization Result
 
             if (!result.Successful()) {
-
                 std::string error =
                     "Authorization failed: "
                     + result.ToString();
-
 
                 printf(
                     "[DiscordBridge] %s\n",
                     error.c_str()
                 );
 
-
                 if (callback != nullptr) {
                     callback(
                         0,
                         error.c_str(),
-                        nullptr
+                        nullptr,
+                        nullptr,
+                        0
                     );
                 }
-
 
                 return;
             }
 
-
             printf(
                 "[DiscordBridge] Authorization code received.\n"
             );
-
 
             // MARK: Exchange Code For Tokens
 
@@ -225,35 +214,31 @@ void discord_bridge_authorize(
                 ) {
 
                     if (!tokenResult.Successful()) {
-
                         std::string error =
                             "Token exchange failed: "
                             + tokenResult.ToString();
-
 
                         printf(
                             "[DiscordBridge] %s\n",
                             error.c_str()
                         );
 
-
                         if (callback != nullptr) {
                             callback(
                                 0,
                                 error.c_str(),
-                                nullptr
+                                nullptr,
+                                nullptr,
+                                0
                             );
                         }
-
 
                         return;
                     }
 
-
                     printf(
                         "[DiscordBridge] Access token received.\n"
                     );
-
 
                     // MARK: Install Access Token
 
@@ -263,58 +248,53 @@ void discord_bridge_authorize(
 
                         [
                             callback,
-                            refreshToken
+                            accessToken,
+                            refreshToken,
+                            expiresIn
                         ](
                             discordpp::ClientResult updateResult
                         ) {
 
                             if (!updateResult.Successful()) {
-
                                 std::string error =
                                     "UpdateToken failed: "
                                     + updateResult.ToString();
-
 
                                 printf(
                                     "[DiscordBridge] %s\n",
                                     error.c_str()
                                 );
 
-
                                 if (callback != nullptr) {
                                     callback(
                                         0,
                                         error.c_str(),
-                                        nullptr
+                                        nullptr,
+                                        nullptr,
+                                        0
                                     );
                                 }
 
-
                                 return;
                             }
-
 
                             printf(
                                 "[DiscordBridge] Token installed.\n"
                             );
 
-
-                            // Pass the refresh token back to Swift.
-                            // Swift will store it in Keychain.
-
                             if (callback != nullptr) {
                                 callback(
                                     1,
                                     "Authorization successful.",
-                                    refreshToken.c_str()
+                                    accessToken.c_str(),
+                                    refreshToken.c_str(),
+                                    static_cast<int64_t>(expiresIn)
                                 );
                             }
-
 
                             reportStatus(
                                 DiscordBridgeStatusConnecting
                             );
-
 
                             g_client->Connect();
                         }
@@ -324,8 +304,6 @@ void discord_bridge_authorize(
         }
     );
 }
-
-
 // MARK: - Run SDK Callbacks
 
 void discord_bridge_run_callbacks(
@@ -414,6 +392,8 @@ void discord_bridge_get_current_user(
 
 // MARK: - Update Rich Presence
 
+// MARK: - Update Rich Presence
+
 void discord_bridge_update_presence(
     const char *details,
     const char *state,
@@ -421,14 +401,32 @@ void discord_bridge_update_presence(
     const char *large_image_text,
     const char *small_image,
     const char *small_image_text,
-    int show_elapsed_time
+    const char *button_1_label,
+    const char *button_1_url,
+    const char *button_2_label,
+    const char *button_2_url,
+    int64_t start_timestamp,
+    int64_t end_timestamp,
+    DiscordBridgePresenceCallback callback,
+    void *context
 ) {
     if (g_client == nullptr) {
 
+        const char *message =
+            "Discord client is not initialized.";
+
         printf(
-            "[DiscordBridge] Cannot update presence: "
-            "client is not initialized.\n"
+            "[DiscordBridge] Cannot update presence: %s\n",
+            message
         );
+
+        if (callback != nullptr) {
+            callback(
+                0,
+                message,
+                context
+            );
+        }
 
         return;
     }
@@ -523,39 +521,100 @@ void discord_bridge_update_presence(
     }
 
 
-    // MARK: Elapsed Time
+    // MARK: Timer
 
-    printf(
-        "[DiscordBridge] show_elapsed_time = %d\n",
-        show_elapsed_time
-    );
+    discordpp::ActivityTimestamps timestamps{};
 
-    if (show_elapsed_time != 0) {
-
-        discordpp::ActivityTimestamps timestamps{};
+    bool hasTimestamp = false;
 
 
-        auto now =
-            std::chrono::system_clock::now();
-
-
-        auto milliseconds =
-            std::chrono::duration_cast<
-                std::chrono::milliseconds
-            >(
-                now.time_since_epoch()
-            ).count();
-
+    if (start_timestamp > 0) {
 
         timestamps.SetStart(
             static_cast<uint64_t>(
-                milliseconds
+                start_timestamp
             )
         );
 
+        hasTimestamp = true;
 
+        printf(
+            "[DiscordBridge] Elapsed timer start: %lld\n",
+            static_cast<long long>(
+                start_timestamp
+            )
+        );
+    }
+
+
+    if (end_timestamp > 0) {
+
+        timestamps.SetEnd(
+            static_cast<uint64_t>(
+                end_timestamp
+            )
+        );
+
+        hasTimestamp = true;
+
+        printf(
+            "[DiscordBridge] Countdown timer end: %lld\n",
+            static_cast<long long>(
+                end_timestamp
+            )
+        );
+    }
+
+
+    if (hasTimestamp) {
         activity.SetTimestamps(
             timestamps
+        );
+    }
+
+
+    // MARK: Buttons
+
+    if (
+        button_1_label != nullptr &&
+        button_1_label[0] != '\0' &&
+        button_1_url != nullptr &&
+        button_1_url[0] != '\0'
+    ) {
+        discordpp::ActivityButton button{};
+
+        button.SetLabel(
+            std::string(button_1_label)
+        );
+
+        button.SetUrl(
+            std::string(button_1_url)
+        );
+
+        activity.AddButton(
+            button
+        );
+    }
+
+
+    if (
+        button_2_label != nullptr &&
+        button_2_label[0] != '\0' &&
+        button_2_url != nullptr &&
+        button_2_url[0] != '\0'
+    ) {
+        discordpp::ActivityButton button{};
+
+        button.SetLabel(
+            std::string(button_2_label)
+        );
+
+        button.SetUrl(
+            std::string(button_2_url)
+        );
+
+        activity.AddButton(
+            button
         );
     }
 
@@ -570,9 +629,12 @@ void discord_bridge_update_presence(
     g_client->UpdateRichPresence(
         std::move(activity),
 
-        [](
+        [callback, context](
             discordpp::ClientResult result
         ) {
+
+            std::string message =
+                result.ToString();
 
             if (result.Successful()) {
 
@@ -580,17 +642,32 @@ void discord_bridge_update_presence(
                     "[DiscordBridge] Rich Presence updated successfully.\n"
                 );
 
+                if (callback != nullptr) {
+                    callback(
+                        1,
+                        message.c_str(),
+                        context
+                    );
+                }
+
             } else {
 
                 printf(
                     "[DiscordBridge] Rich Presence update failed: %s\n",
-                    result.ToString().c_str()
+                    message.c_str()
                 );
+
+                if (callback != nullptr) {
+                    callback(
+                        0,
+                        message.c_str(),
+                        context
+                    );
+                }
             }
         }
     );
 }
-
 
 // MARK: - Clear Rich Presence
 
@@ -633,7 +710,9 @@ void discord_bridge_login_with_refresh_token(
             callback(
                 0,
                 "Discord client is not initialized.",
-                nullptr
+                nullptr,
+                nullptr,
+                0
             );
         }
 
@@ -647,7 +726,9 @@ void discord_bridge_login_with_refresh_token(
             callback(
                 0,
                 "Refresh token is empty.",
-                nullptr
+                nullptr,
+                nullptr,
+                0
             );
         }
 
@@ -661,6 +742,7 @@ void discord_bridge_login_with_refresh_token(
     g_client->RefreshToken(
         application_id,
         std::string(refresh_token),
+
         [callback](
             discordpp::ClientResult result,
             std::string accessToken,
@@ -669,10 +751,11 @@ void discord_bridge_login_with_refresh_token(
             int32_t expiresIn,
             std::string scopes
         ) {
+
             if (!result.Successful()) {
                 std::string error =
-                    "Token refresh failed: " +
-                    result.ToString();
+                    "Token refresh failed: "
+                    + result.ToString();
 
                 printf(
                     "[DiscordBridge] %s\n",
@@ -683,7 +766,9 @@ void discord_bridge_login_with_refresh_token(
                     callback(
                         0,
                         error.c_str(),
-                        nullptr
+                        nullptr,
+                        nullptr,
+                        0
                     );
                 }
 
@@ -694,37 +779,58 @@ void discord_bridge_login_with_refresh_token(
                 "[DiscordBridge] Discord token refreshed.\n"
             );
 
+            // MARK: Install New Access Token
+
             g_client->UpdateToken(
                 tokenType,
                 accessToken,
-                [callback, refreshToken](
+
+                [
+                    callback,
+                    accessToken,
+                    refreshToken,
+                    expiresIn
+                ](
                     discordpp::ClientResult updateResult
                 ) {
+
                     if (!updateResult.Successful()) {
                         std::string error =
-                            "UpdateToken failed: " +
-                            updateResult.ToString();
+                            "UpdateToken failed: "
+                            + updateResult.ToString();
+
+                        printf(
+                            "[DiscordBridge] %s\n",
+                            error.c_str()
+                        );
 
                         if (callback != nullptr) {
                             callback(
                                 0,
                                 error.c_str(),
-                                nullptr
+                                nullptr,
+                                nullptr,
+                                0
                             );
                         }
 
                         return;
                     }
 
-                    // IMPORTANT:
-                    // RefreshToken invalidates the old refresh token,
-                    // so Swift must save this NEW one.
+                    printf(
+                        "[DiscordBridge] Refreshed token installed.\n"
+                    );
+
+                    // RefreshToken rotates the credentials.
+                    // Swift must persist BOTH replacements.
 
                     if (callback != nullptr) {
                         callback(
                             1,
-                            "Saved Discord login restored.",
-                            refreshToken.c_str()
+                            "Saved Discord login refreshed.",
+                            accessToken.c_str(),
+                            refreshToken.c_str(),
+                            static_cast<int64_t>(expiresIn)
                         );
                     }
 
@@ -735,6 +841,66 @@ void discord_bridge_login_with_refresh_token(
                     g_client->Connect();
                 }
             );
+        }
+    );
+}
+
+void discord_bridge_login_with_access_token(
+    const char *access_token
+) {
+    if (g_client == nullptr) {
+        printf(
+            "[DiscordBridge] Cannot restore access token: "
+            "client is not initialized.\n"
+        );
+
+        return;
+    }
+
+    if (access_token == nullptr ||
+        access_token[0] == '\0') {
+
+        printf(
+            "[DiscordBridge] Cannot restore access token: "
+            "token is empty.\n"
+        );
+
+        return;
+    }
+
+    printf(
+        "[DiscordBridge] Installing saved access token...\n"
+    );
+
+    g_client->UpdateToken(
+        discordpp::AuthorizationTokenType::Bearer,
+        std::string(access_token),
+
+        [](
+            discordpp::ClientResult result
+        ) {
+            if (!result.Successful()) {
+                printf(
+                    "[DiscordBridge] Saved access token failed: %s\n",
+                    result.ToString().c_str()
+                );
+
+                reportStatus(
+                    DiscordBridgeStatusError
+                );
+
+                return;
+            }
+
+            printf(
+                "[DiscordBridge] Saved access token installed.\n"
+            );
+
+            reportStatus(
+                DiscordBridgeStatusConnecting
+            );
+
+            g_client->Connect();
         }
     );
 }

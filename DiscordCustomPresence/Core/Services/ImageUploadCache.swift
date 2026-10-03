@@ -8,6 +8,7 @@ final class ImageUploadCache {
     private struct CacheEntry: Codable {
         let url: String
         let objectKey: String
+        var expiresAt: Double? = nil
     }
 
     private var entries: [String: CacheEntry] = [:]
@@ -16,6 +17,13 @@ final class ImageUploadCache {
 
     private init() {
         load()
+    }
+
+
+    // MARK: - Information
+
+    var cachedUploadCount: Int {
+        entries.count
     }
 
 
@@ -29,8 +37,9 @@ final class ImageUploadCache {
             at: fileURL
         )
 
-        guard let entry = entries[hash],
-              let url = URL(string: entry.url)
+        guard
+            let entry = entries[hash],
+            let url = URL(string: entry.url)
         else {
             return nil
         }
@@ -43,7 +52,8 @@ final class ImageUploadCache {
         return UploadedImage(
             id: hash,
             key: entry.objectKey,
-            url: url
+            url: url,
+            expiresAt: entry.expiresAt
         )
     }
 
@@ -61,7 +71,8 @@ final class ImageUploadCache {
 
         entries[hash] = CacheEntry(
             url: uploadedImage.url.absoluteString,
-            objectKey: uploadedImage.key
+            objectKey: uploadedImage.key,
+            expiresAt: uploadedImage.expiresAt
         )
 
         try save()
@@ -69,6 +80,32 @@ final class ImageUploadCache {
         print(
             "Image saved to upload cache:",
             fileURL.lastPathComponent
+        )
+    }
+
+
+    // MARK: - Clear
+
+    func remove(objectKey: String) throws {
+        entries = entries.filter { $0.value.objectKey != objectKey }
+        try save()
+    }
+
+    func clear() throws {
+        entries.removeAll()
+
+        let url = try cacheFileURL()
+
+        if fileManager.fileExists(
+            atPath: url.path
+        ) {
+            try fileManager.removeItem(
+                at: url
+            )
+        }
+
+        print(
+            "Cleared Lumaunt image upload cache."
         )
     }
 
@@ -103,21 +140,22 @@ final class ImageUploadCache {
     private func cacheFileURL() throws -> URL {
 
         guard let applicationSupport =
-                fileManager.urls(
-                    for: .applicationSupportDirectory,
-                    in: .userDomainMask
-                ).first
+            fileManager.urls(
+                for: .applicationSupportDirectory,
+                in: .userDomainMask
+            ).first
         else {
             throw CocoaError(
                 .fileNoSuchFile
             )
         }
 
-        let directory = applicationSupport
-            .appendingPathComponent(
-                "Lumaunt",
-                isDirectory: true
-            )
+        let directory =
+            applicationSupport
+                .appendingPathComponent(
+                    "Lumaunt",
+                    isDirectory: true
+                )
 
         try fileManager.createDirectory(
             at: directory,
@@ -146,11 +184,12 @@ final class ImageUploadCache {
                 contentsOf: url
             )
 
-            entries = try JSONDecoder()
-                .decode(
-                    [String: CacheEntry].self,
-                    from: data
-                )
+            entries =
+                try JSONDecoder()
+                    .decode(
+                        [String: CacheEntry].self,
+                        from: data
+                    )
 
             print(
                 "Loaded \(entries.count) cached image upload(s)."
@@ -171,8 +210,9 @@ final class ImageUploadCache {
 
         let url = try cacheFileURL()
 
-        let data = try JSONEncoder()
-            .encode(entries)
+        let data =
+            try JSONEncoder()
+                .encode(entries)
 
         try data.write(
             to: url,

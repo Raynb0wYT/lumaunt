@@ -1,13 +1,11 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var appState = AppState()
+    @Bindable var appState: AppState
 
     var body: some View {
-        MainView(appState: appState)
+        MainView(
+            appState: appState
+        )
     }
-}
-
-#Preview {
-    ContentView()
 }

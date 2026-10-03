@@ -64,3 +64,9 @@ secrets.json
 
 *.log
 *.tmp
+
+# Local project backups and working documents
+/DiscordCustomPresence 2.zip
+/Lumaunt-Images/
+/Rich_Presence_Manager_Master_Checklist*
+/Backend/worker-original.js

@@ -1,5 +1,6 @@
 import Foundation
 import Observation
+import AppKit
 
 
 enum DiscordConnectionState: Equatable {
@@ -26,96 +27,104 @@ private func discordAuthFinished(
     guard let manager = activeDiscordManager else { return }
     let generation = discord_bridge_connection_generation()
     guard manager.acceptsCallback(from: generation) else { return }
-
+    
     let text: String
-
+    
     if let message {
         text = String(cString: message)
     } else {
         text =
-            "Unknown Discord authorization result."
+        "Unknown Discord authorization result."
     }
-
+    
     print(
         "Discord OAuth:",
         success == 1
-            ? "SUCCESS"
-            : "FAILED",
+        ? "SUCCESS"
+        : "FAILED",
         text
     )
-
+    
     guard success == 1 else {
         Task { @MainActor in
             guard manager.acceptsCallback(from: generation) else { return }
             manager.handleAuthenticationFailure(message: text)
         }
-
+        
         return
     }
-
+    
     guard
         let accessToken,
         let refreshToken,
         expiresIn > 0
-    else {
+            else {
         print(
             "Discord authentication succeeded, " +
             "but the returned session was incomplete."
         )
-
+        
         Task { @MainActor in
             guard manager.acceptsCallback(from: generation) else { return }
             manager.handleAuthenticationFailure(
                 message: "Discord returned an incomplete authentication session."
             )
         }
-
+        
         return
     }
-
+    
     let accessTokenString =
-        String(cString: accessToken)
-
+    String(cString: accessToken)
+    
     let refreshTokenString =
-        String(cString: refreshToken)
-
+    String(cString: refreshToken)
+    
     let expiration =
-        Date().addingTimeInterval(
-            TimeInterval(expiresIn)
-        )
-
+    Date().addingTimeInterval(
+        TimeInterval(expiresIn)
+    )
+    
     let session =
-        DiscordSession(
-            accessToken:
-                accessTokenString,
-            refreshToken:
-                refreshTokenString,
-            accessTokenExpiration:
-                expiration
-        )
-
+    DiscordSession(
+        accessToken:
+            accessTokenString,
+        refreshToken:
+            refreshTokenString,
+        accessTokenExpiration:
+            expiration
+    )
+    
     if KeychainStore
         .saveDiscordSession(session) {
-
+        
         print(
             "Discord session credentials saved."
         )
-
+        
         print(
             "Access token expires:",
             expiration
         )
-
+        
     } else {
         print(
             "Failed to save Discord session."
         )
     }
-
+    
     // Remove credentials created by Lumaunt's
     // old refresh-token-only implementation.
     KeychainStore
         .deleteLegacyRefreshToken()
+    
+    Task { @MainActor in
+        guard manager.acceptsCallback(from: generation) else {
+            return
+        }
+        
+        manager.openOAuthSuccessPageIfNeeded()
+    }
 }
 
 
@@ -372,6 +381,24 @@ final class DiscordManager {
     private var runtimeActive = false
     private(set) var intentionalDisconnectGeneration = 0
 
+    private var shouldOpenOAuthSuccessPage = false
+
+    fileprivate func openOAuthSuccessPageIfNeeded() {
+        guard shouldOpenOAuthSuccessPage else {
+            return
+        }
+
+        shouldOpenOAuthSuccessPage = false
+
+        guard let url = URL(
+            string: "https://lumaunt.app/auth/discord/"
+        ) else {
+            return
+        }
+
+        NSWorkspace.shared.open(url)
+    }
+
     func acceptsCallback(from generation: UInt64) -> Bool {
         runtimeActive && generation == discord_bridge_connection_generation()
     }
@@ -533,6 +560,8 @@ final class DiscordManager {
     func connect() {
         activeDiscordManager = self
 
+        shouldOpenOAuthSuccessPage = true
+
         connectionState =
             .authorizing
 
@@ -556,6 +585,7 @@ final class DiscordManager {
     func handleAuthenticationFailure(
         message: String
     ) {
+        shouldOpenOAuthSuccessPage = false
         print(
             "Discord authentication failed:",
             message

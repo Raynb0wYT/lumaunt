@@ -267,6 +267,7 @@ final class AppState {
         hideWindowAfterApplying: Bool = true,
         restoredExpiration: Date? = nil
     ) async {
+        let disconnectGeneration = discord.intentionalDisconnectGeneration
 
         if let restoredExpiration,
            restoredExpiration <= Date() {
@@ -352,6 +353,10 @@ final class AppState {
 
             // MARK: Discord
 
+            guard discord.intentionalDisconnectGeneration == disconnectGeneration else {
+                return
+            }
+
             try await discord.updatePresence(
                 details: presence.details,
                 state: presence.state,
@@ -373,6 +378,9 @@ final class AppState {
             // confirmed success. Only now do we consider
             // this configuration active.
 
+            guard discord.intentionalDisconnectGeneration == disconnectGeneration else {
+                return
+            }
             activeAppliedPresence = presence
 
             replaceAutoDisableScheduleIfNeeded()
@@ -407,6 +415,9 @@ final class AppState {
             }
 
         } catch {
+            guard discord.intentionalDisconnectGeneration == disconnectGeneration else {
+                return
+            }
             showPresenceError(error)
 
             print(
@@ -1030,6 +1041,7 @@ final class AppState {
     // MARK: - Automatic Restore
 
     private func beginAutomaticPresenceRestore() {
+        let disconnectGeneration = discord.intentionalDisconnectGeneration
         Task { @MainActor [weak self] in
             guard let self else {
                 return
@@ -1067,6 +1079,9 @@ final class AppState {
             // Discord's OAuth/session restoration is
             // asynchronous. Give it time to reach Ready.
             for _ in 0..<120 {
+                guard self.discord.intentionalDisconnectGeneration == disconnectGeneration else {
+                    return
+                }
 
                 if self.discord.connectionState ==
                     .connected {

@@ -67,6 +67,9 @@ void discord_bridge_run_callbacks(void);
 
 void discord_bridge_shutdown(void);
 
+// Changes on client creation and shutdown; used to reject queued stale callbacks.
+uint64_t discord_bridge_connection_generation(void);
+
 
 // MARK: - Current User
 

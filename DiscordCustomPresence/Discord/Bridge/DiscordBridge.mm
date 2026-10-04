@@ -7,9 +7,28 @@
 #include <cstdio>
 #include <chrono>
 #include <utility>
+#include <vector>
+#include <algorithm>
 
 
 static std::shared_ptr<discordpp::Client> g_client = nullptr;
+
+// Every asynchronous operation belongs to one client lifetime.
+static uint64_t g_generation = 0;
+uint64_t discord_bridge_connection_generation(void) { return g_generation; }
+static bool isCurrentClient(uint64_t generation) {
+    return g_client != nullptr && generation == g_generation;
+}
+
+struct PendingPresence {
+    DiscordBridgePresenceCallback callback;
+    void *context;
+    void finish(int success, const char *message) {
+        auto completion = std::exchange(callback, nullptr);
+        if (completion) completion(success, message, context);
+    }
+};
+static std::vector<std::shared_ptr<PendingPresence>> g_pendingPresence;
 
 static DiscordBridgeStatusCallback g_statusCallback = nullptr;
 
@@ -52,6 +71,8 @@ void discord_bridge_initialize(
         "[DiscordBridge] Creating Discord client...\n"
     );
 
+    const auto generation = ++g_generation;
+
     g_client =
         std::make_shared<discordpp::Client>();
 
@@ -77,7 +98,8 @@ void discord_bridge_initialize(
     // MARK: Status Changes
 
     g_client->SetStatusChangedCallback(
-        [](auto status, auto error, auto errorDetail) {
+        [generation](auto status, auto error, auto errorDetail) {
+            if (!isCurrentClient(generation)) return;
 
             printf(
                 "[DiscordBridge] SDK status: %s\n",
@@ -134,6 +156,8 @@ void discord_bridge_authorize(
         "[DiscordBridge] Starting OAuth...\n"
     );
 
+    const auto generation = g_generation;
+
     auto verifier =
         g_client->CreateAuthorizationCodeVerifier();
 
@@ -158,6 +182,7 @@ void discord_bridge_authorize(
         args,
 
         [
+            generation,
             application_id,
             codeVerifier,
             callback
@@ -166,6 +191,7 @@ void discord_bridge_authorize(
             std::string code,
             std::string redirectUri
         ) {
+            if (!isCurrentClient(generation)) return;
 
             // MARK: Authorization Result
 
@@ -204,7 +230,7 @@ void discord_bridge_authorize(
                 codeVerifier,
                 redirectUri,
 
-                [callback](
+                [callback, generation](
                     discordpp::ClientResult tokenResult,
                     std::string accessToken,
                     std::string refreshToken,
@@ -212,6 +238,7 @@ void discord_bridge_authorize(
                     int32_t expiresIn,
                     std::string scopes
                 ) {
+                    if (!isCurrentClient(generation)) return;
 
                     if (!tokenResult.Successful()) {
                         std::string error =
@@ -247,6 +274,7 @@ void discord_bridge_authorize(
                         accessToken,
 
                         [
+                            generation,
                             callback,
                             accessToken,
                             refreshToken,
@@ -254,6 +282,7 @@ void discord_bridge_authorize(
                         ](
                             discordpp::ClientResult updateResult
                         ) {
+                            if (!isCurrentClient(generation)) return;
 
                             if (!updateResult.Successful()) {
                                 std::string error =
@@ -323,12 +352,20 @@ void discord_bridge_shutdown(
     );
 
 
-    g_client.reset();
-
-
-    reportStatus(
-        DiscordBridgeStatusDisconnected
-    );
+    // Invalidate callbacks before aborting SDK operations (which may complete inline).
+    ++g_generation;
+    g_statusCallback = nullptr;
+    g_statusContext = nullptr;
+    for (auto &pending : g_pendingPresence) {
+        pending->finish(0, "Discord account disconnected.");
+    }
+    g_pendingPresence.clear();
+    if (g_client) {
+        g_client->AbortAuthorize();
+        g_client->Disconnect();
+        // Client destruction calls the installed SDK's Client::Drop.
+        g_client.reset();
+    }
 }
 
 
@@ -626,45 +663,19 @@ void discord_bridge_update_presence(
     );
 
 
+    g_pendingPresence.erase(
+        std::remove_if(g_pendingPresence.begin(), g_pendingPresence.end(),
+                       [](const auto &pending) { return pending->callback == nullptr; }),
+        g_pendingPresence.end());
+    auto pending = std::make_shared<PendingPresence>(PendingPresence{callback, context});
+    g_pendingPresence.push_back(pending);
+    const auto generation = g_generation;
     g_client->UpdateRichPresence(
         std::move(activity),
-
-        [callback, context](
-            discordpp::ClientResult result
-        ) {
-
-            std::string message =
-                result.ToString();
-
-            if (result.Successful()) {
-
-                printf(
-                    "[DiscordBridge] Rich Presence updated successfully.\n"
-                );
-
-                if (callback != nullptr) {
-                    callback(
-                        1,
-                        message.c_str(),
-                        context
-                    );
-                }
-
-            } else {
-
-                printf(
-                    "[DiscordBridge] Rich Presence update failed: %s\n",
-                    message.c_str()
-                );
-
-                if (callback != nullptr) {
-                    callback(
-                        0,
-                        message.c_str(),
-                        context
-                    );
-                }
-            }
+        [pending, generation](discordpp::ClientResult result) {
+            if (!isCurrentClient(generation)) return;
+            const auto message = result.ToString();
+            pending->finish(result.Successful() ? 1 : 0, message.c_str());
         }
     );
 }
@@ -739,11 +750,13 @@ void discord_bridge_login_with_refresh_token(
         "[DiscordBridge] Refreshing Discord login...\n"
     );
 
+    const auto generation = g_generation;
+
     g_client->RefreshToken(
         application_id,
         std::string(refresh_token),
 
-        [callback](
+        [callback, generation](
             discordpp::ClientResult result,
             std::string accessToken,
             std::string refreshToken,
@@ -751,6 +764,7 @@ void discord_bridge_login_with_refresh_token(
             int32_t expiresIn,
             std::string scopes
         ) {
+            if (!isCurrentClient(generation)) return;
 
             if (!result.Successful()) {
                 std::string error =
@@ -786,6 +800,7 @@ void discord_bridge_login_with_refresh_token(
                 accessToken,
 
                 [
+                    generation,
                     callback,
                     accessToken,
                     refreshToken,
@@ -793,6 +808,7 @@ void discord_bridge_login_with_refresh_token(
                 ](
                     discordpp::ClientResult updateResult
                 ) {
+                    if (!isCurrentClient(generation)) return;
 
                     if (!updateResult.Successful()) {
                         std::string error =
@@ -872,13 +888,16 @@ void discord_bridge_login_with_access_token(
         "[DiscordBridge] Installing saved access token...\n"
     );
 
+    const auto generation = g_generation;
+
     g_client->UpdateToken(
         discordpp::AuthorizationTokenType::Bearer,
         std::string(access_token),
 
-        [](
+        [generation](
             discordpp::ClientResult result
         ) {
+            if (!isCurrentClient(generation)) return;
             if (!result.Successful()) {
                 printf(
                     "[DiscordBridge] Saved access token failed: %s\n",

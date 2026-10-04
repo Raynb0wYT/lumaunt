@@ -23,6 +23,10 @@ private func discordAuthFinished(
     _ refreshToken: UnsafePointer<CChar>?,
     _ expiresIn: Int64
 ) {
+    guard let manager = activeDiscordManager else { return }
+    let generation = discord_bridge_connection_generation()
+    guard manager.acceptsCallback(from: generation) else { return }
+
     let text: String
 
     if let message {
@@ -42,10 +46,8 @@ private func discordAuthFinished(
 
     guard success == 1 else {
         Task { @MainActor in
-            activeDiscordManager?
-                .handleAuthenticationFailure(
-                    message: text
-                )
+            guard manager.acceptsCallback(from: generation) else { return }
+            manager.handleAuthenticationFailure(message: text)
         }
 
         return
@@ -62,11 +64,10 @@ private func discordAuthFinished(
         )
 
         Task { @MainActor in
-            activeDiscordManager?
-                .handleAuthenticationFailure(
-                    message:
-                        "Discord returned an incomplete authentication session."
-                )
+            guard manager.acceptsCallback(from: generation) else { return }
+            manager.handleAuthenticationFailure(
+                message: "Discord returned an incomplete authentication session."
+            )
         }
 
         return
@@ -133,7 +134,9 @@ private func discordStatusChanged(
             .fromOpaque(context)
             .takeUnretainedValue()
 
+    let generation = discord_bridge_connection_generation()
     Task { @MainActor in
+        guard manager.acceptsCallback(from: generation) else { return }
         manager.handleDiscordStatus(
             status
         )
@@ -179,7 +182,9 @@ private let discordUserReceived:
                 String(cString: $0)
             }
 
+        let generation = discord_bridge_connection_generation()
         Task { @MainActor in
+            guard manager.acceptsCallback(from: generation) else { return }
             manager.updateDiscordUser(
                 displayName:
                     displayNameString,
@@ -364,6 +369,12 @@ final class DiscordManager {
     var avatarURL: URL?
 
     private var callbackTimer: Timer?
+    private var runtimeActive = false
+    private(set) var intentionalDisconnectGeneration = 0
+
+    func acceptsCallback(from generation: UInt64) -> Bool {
+        runtimeActive && generation == discord_bridge_connection_generation()
+    }
 
     private let presenceUpdateTimeout:
         Duration = .seconds(15)
@@ -478,22 +489,7 @@ final class DiscordManager {
         connectionState =
             .connecting
 
-        startCallbackPump()
-
-        let context =
-            Unmanaged
-                .passUnretained(self)
-                .toOpaque()
-
-        discord_bridge_set_status_callback(
-            discordStatusChanged,
-            context
-        )
-
-        discord_bridge_initialize(
-            DiscordConfiguration
-                .applicationID
-        )
+        startConnectionRuntime()
 
         if session.needsRefresh {
             print(
@@ -540,22 +536,7 @@ final class DiscordManager {
         connectionState =
             .authorizing
 
-        startCallbackPump()
-
-        let context =
-            Unmanaged
-                .passUnretained(self)
-                .toOpaque()
-
-        discord_bridge_set_status_callback(
-            discordStatusChanged,
-            context
-        )
-
-        discord_bridge_initialize(
-            DiscordConfiguration
-                .applicationID
-        )
+        startConnectionRuntime()
 
         discord_bridge_authorize(
             DiscordConfiguration
@@ -738,9 +719,13 @@ final class DiscordManager {
             )
         }
 
+        let generation = discord_bridge_connection_generation()
         try await sendPresence(
             presence
         )
+        guard acceptsCallback(from: generation) else {
+            throw PresenceUpdateError(message: "Discord account disconnected.")
+        }
 
         // Only remember the presence after Discord's
         // UpdateRichPresence callback reports success.
@@ -958,7 +943,9 @@ final class DiscordManager {
             "Restoring active Rich Presence..."
         )
 
+        let generation = discord_bridge_connection_generation()
         Task {
+            guard acceptsCallback(from: generation) else { return }
             do {
                 try await sendPresence(
                     activePresence
@@ -1021,10 +1008,44 @@ final class DiscordManager {
     }
 
 
+    // Shared runtime lifecycle, separate from OAuth/Keychain cleanup.
+    // Starting creates a client and callback pump; it does not authorize or connect.
+    func startConnectionRuntime() {
+        activeDiscordManager = self
+        runtimeActive = true
+        startCallbackPump()
+
+        let context =
+            Unmanaged
+                .passUnretained(self)
+                .toOpaque()
+
+        discord_bridge_set_status_callback(
+            discordStatusChanged,
+            context
+        )
+
+        discord_bridge_initialize(
+            DiscordConfiguration
+                .applicationID
+        )
+    }
+
+    func stopConnectionRuntime() {
+        runtimeActive = false
+        intentionalDisconnectGeneration += 1
+        activeDiscordManager = nil
+        callbackTimer?.invalidate()
+        callbackTimer = nil
+        discord_bridge_shutdown()
+    }
+
+
     // MARK: - Disconnect
 
     func disconnect() {
         clearPresence()
+        stopConnectionRuntime()
 
         KeychainStore
             .deleteDiscordSession()

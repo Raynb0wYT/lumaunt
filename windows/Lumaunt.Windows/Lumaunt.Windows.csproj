@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType><TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <UseWPF>true</UseWPF><UseWindowsForms>true</UseWindowsForms><EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <SentryNative>false</SentryNative><ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable>
+    <AssemblyName>Lumaunt</AssemblyName><ApplicationIcon>Assets/Lumaunt.ico</ApplicationIcon><ApplicationManifest>app.manifest</ApplicationManifest><Version>1.0.0</Version>
+  </PropertyGroup>
+  <ItemGroup><ProjectReference Include="../Lumaunt.Core/Lumaunt.Core.csproj" /><RuntimeHostConfigurationOption Include="Sentry.Native.IsEnabled" Value="false" /><Resource Include="Assets/Lumaunt.png" /></ItemGroup>
+<ItemGroup><Using Remove="System.Windows.Forms" /><Using Remove="System.Drawing" /></ItemGroup>
+<ItemGroup>
+  <PackageReference Include="SkiaSharp" Version="4.153.1" />
+  <PackageReference Include="Sentry" Version="6.11.1" />
+</ItemGroup><ItemGroup><Content Include="ThirdParty/*.txt" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest"/></ItemGroup></Project>

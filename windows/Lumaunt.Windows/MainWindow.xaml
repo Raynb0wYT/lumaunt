@@ -1,0 +1,641 @@
+<Window xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" x:Class="Lumaunt.Windows.MainWindow" Title="Lumaunt" Icon="Assets/Lumaunt.png" Width="1200" Height="850" MinWidth="760" MinHeight="560" Background="{DynamicResource BackgroundBrush}" FontFamily="Segoe UI" FontSize="14">
+  <Window.Resources>
+    <Style x:Key="TimerSegment" TargetType="RadioButton">
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+      <Setter Property="Padding" Value="16,8" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="RadioButton">
+            <Border x:Name="Segment" Background="{DynamicResource InputBrush}" CornerRadius="8" Padding="{TemplateBinding Padding}" BorderThickness="2" BorderBrush="Transparent">
+              <ContentPresenter VerticalAlignment="Center" />
+            </Border>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsChecked" Value="True">
+                <Setter Property="Foreground" Value="White" />
+                <Setter TargetName="Segment" Property="Background" Value="#096FCF" />
+              </Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True">
+                <Setter TargetName="Segment" Property="BorderBrush" Value="#5BD8FA" />
+              </Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+    <Style x:Key="CountdownArrow" TargetType="RepeatButton">
+      <Setter Property="Width" Value="24" /><Setter Property="Height" Value="16" />
+      <Setter Property="Delay" Value="350" /><Setter Property="Interval" Value="100" />
+      <Setter Property="Foreground" Value="{DynamicResource PrimaryBrush}" />
+      <Setter Property="Background" Value="{DynamicResource PreviewBrush}" />
+      <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RepeatButton">
+        <Border x:Name="ArrowSurface" Background="{TemplateBinding Background}" CornerRadius="4" BorderBrush="Transparent" BorderThickness="1">
+          <Path x:Name="Chevron" Data="M 0,4 L 4,0 L 8,4" Width="9" Height="5" Stretch="Fill" Stroke="{TemplateBinding Foreground}" StrokeThickness="1.5" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" HorizontalAlignment="Center" VerticalAlignment="Center" />
+        </Border>
+        <ControlTemplate.Triggers>
+          <Trigger Property="Tag" Value="HoursDown"><Setter TargetName="Chevron" Property="Data" Value="M 0,0 L 4,4 L 8,0" /></Trigger>
+          <Trigger Property="Tag" Value="MinutesDown"><Setter TargetName="Chevron" Property="Data" Value="M 0,0 L 4,4 L 8,0" /></Trigger>
+          <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="ArrowSurface" Property="Background" Value="{DynamicResource SelectionBrush}" /></Trigger>
+          <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="ArrowSurface" Property="BorderBrush" Value="#5BD8FA" /></Trigger>
+          <Trigger Property="IsEnabled" Value="False"><Setter TargetName="ArrowSurface" Property="Opacity" Value="0.4" /></Trigger>
+        </ControlTemplate.Triggers>
+      </ControlTemplate></Setter.Value></Setter>
+    </Style>
+    <Style x:Key="EmptyImageBox" TargetType="Button">
+      <Setter Property="Height" Value="156" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Template">
+        <Setter.Value>
+          <ControlTemplate TargetType="Button">
+            <Grid Background="Transparent">
+              <Rectangle x:Name="Outline" Margin="1" RadiusX="12" RadiusY="12" Stroke="{DynamicResource MutedBrush}" StrokeThickness="1" StrokeDashArray="1,4" StrokeDashCap="Round" IsHitTestVisible="False" />
+            </Grid>
+            <ControlTemplate.Triggers>
+              <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Outline" Property="Stroke" Value="#5BD8FA" /></Trigger>
+              <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Outline" Property="Stroke" Value="#5BD8FA" /><Setter TargetName="Outline" Property="StrokeThickness" Value="2" /></Trigger>
+            </ControlTemplate.Triggers>
+          </ControlTemplate>
+        </Setter.Value>
+      </Setter>
+    </Style>
+  </Window.Resources>
+  <Grid>
+    <Grid>
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="220" />
+        <ColumnDefinition Width="*" />
+      </Grid.ColumnDefinitions>
+      <Border Background="{DynamicResource SidebarBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,1,0" Padding="14">
+        <DockPanel>
+          <StackPanel DockPanel.Dock="Top">
+            <StackPanel Orientation="Horizontal" Margin="8,12,0,30">
+              <Image Source="Assets/Lumaunt.png" Width="32" Height="32" />
+              <TextBlock Text="Lumaunt" FontSize="21" FontWeight="SemiBold" Margin="10,2,0,0" />
+            </StackPanel>
+            <Button x:Name="NavPresence" Tag="Presence" Click="NavigateClicked" Style="{StaticResource NavigationButton}" AutomationProperties.Name="Presence">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE734;" Style="{StaticResource NavigationIcon}" />
+                <TextBlock Text="Presence" Style="{StaticResource NavigationLabel}" />
+              </StackPanel>
+            </Button>
+            <TextBlock Text="CUSTOMIZE" Style="{StaticResource SidebarCaption}" />
+            <Button x:Name="NavImages" Tag="Images" Click="NavigateClicked" Style="{StaticResource NavigationButton}" AutomationProperties.Name="Images">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xEB9F;" Style="{StaticResource NavigationIcon}" />
+                <TextBlock Text="Images" Style="{StaticResource NavigationLabel}" />
+              </StackPanel>
+            </Button>
+            <Button x:Name="NavButtons" Tag="Buttons" Click="NavigateClicked" Style="{StaticResource NavigationButton}" AutomationProperties.Name="Buttons">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE71B;" Style="{StaticResource NavigationIcon}" />
+                <TextBlock Text="Buttons" Style="{StaticResource NavigationLabel}" />
+              </StackPanel>
+            </Button>
+            <TextBlock Text="LIBRARY" Style="{StaticResource SidebarCaption}" />
+            <Button x:Name="NavPresets" Tag="Presets" Click="NavigateClicked" Style="{StaticResource NavigationButton}" AutomationProperties.Name="Presets">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE8F1;" Style="{StaticResource NavigationIcon}" />
+                <TextBlock Text="Presets" Style="{StaticResource NavigationLabel}" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+          <StackPanel VerticalAlignment="Bottom">
+            <Border Style="{StaticResource Divider}" />
+            <Button x:Name="NavSettings" Tag="Settings" Click="NavigateClicked" Style="{StaticResource NavigationButton}" AutomationProperties.Name="Settings">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="&#xE713;" Style="{StaticResource NavigationIcon}" />
+                <TextBlock Text="Settings" Style="{StaticResource NavigationLabel}" />
+              </StackPanel>
+            </Button>
+            <TextBlock x:Name="ConnectionStatus" Text="Discord disconnected" Style="{StaticResource Caption}" Margin="6,12,0,4" />
+            <Border x:Name="AccountCard" Background="{DynamicResource AccountBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="14" Padding="10" Visibility="Collapsed" Margin="0,8,0,8">
+              <Grid>
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition Width="44" />
+                  <ColumnDefinition Width="*" />
+                  <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <Grid Width="40" Height="40">
+                  <Ellipse Fill="#38465D" />
+                  <TextBlock x:Name="AvatarFallback" Text="✦" HorizontalAlignment="Center" VerticalAlignment="Center" FontSize="20" AutomationProperties.Name="Discord profile picture unavailable" />
+                  <Image x:Name="AccountAvatar" Stretch="UniformToFill" AutomationProperties.Name="Connected Discord profile picture">
+                    <Image.Clip>
+                      <EllipseGeometry Center="20,20" RadiusX="20" RadiusY="20" />
+                    </Image.Clip>
+                  </Image>
+                  <Ellipse Width="11" Height="11" Fill="#32CE68" Stroke="{DynamicResource AccountBrush}" StrokeThickness="2" HorizontalAlignment="Right" VerticalAlignment="Bottom" />
+                </Grid>
+                <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="8,0,0,0">
+                  <TextBlock x:Name="AccountName" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                  <TextBlock x:Name="AccountUsername" FontSize="12" Foreground="{DynamicResource MutedBrush}" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                </StackPanel>
+                <Button Grid.Column="2" Content="⋯" AutomationProperties.Name="Discord account menu" Style="{StaticResource CompactButton}" Padding="6,3" Background="Transparent" Click="AccountMenuClicked" />
+              </Grid>
+            </Border>
+            <Button x:Name="ConnectButton" Content="Connect Discord" Click="ConnectClicked" />
+            <Button x:Name="DisconnectButton" Content="Disconnect Account" Click="DisconnectClicked" Visibility="Collapsed" Style="{StaticResource CompactButton}" />
+            <TextBlock Text="Credentials stay on this PC." Style="{StaticResource Caption}" Margin="6,4,6,6" />
+          </StackPanel>
+        </DockPanel>
+      </Border>
+      <Grid Grid.Column="1">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+          <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Border Padding="30,14" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,0,0,1">
+          <DockPanel>
+            <Border DockPanel.Dock="Right" Background="{DynamicResource SurfaceBrush}" CornerRadius="16" Padding="10,5">
+              <TextBlock x:Name="ConnectionBadge" Text="Discord disconnected" Style="{StaticResource Caption}" />
+            </Border>
+            <TextBlock x:Name="PageTitle" Text="Lumaunt" FontWeight="SemiBold" />
+          </DockPanel>
+        </Border>
+        <ScrollViewer x:Name="ContentScroll" Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+          <StackPanel x:Name="ContentHost" Margin="30,24" SizeChanged="ContentSizeChanged">
+            <Grid x:Name="PresencePage" MaxWidth="1320" HorizontalAlignment="Stretch">
+              <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+              </Grid.RowDefinitions>
+              <StackPanel Margin="0,0,0,26">
+                <TextBlock Text="Presence" Style="{StaticResource PageHeading}" />
+                <TextBlock Text="Create and preview your Discord Rich Presence." Style="{StaticResource Caption}" />
+              </StackPanel>
+              <Grid x:Name="PresenceLayout" Grid.Row="1">
+                <Grid.ColumnDefinitions>
+                  <ColumnDefinition x:Name="EditorColumn" Width="*" />
+                  <ColumnDefinition x:Name="PreviewColumn" Width="0" />
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                  <RowDefinition Height="Auto" />
+                  <RowDefinition Height="Auto" />
+                </Grid.RowDefinitions>
+                <StackPanel x:Name="EditorPane">
+                  <TextBlock Text="Presence Details" FontWeight="SemiBold" />
+                  <TextBlock Text="Customize what Discord displays." Style="{StaticResource Caption}" Margin="0,4,0,18" />
+                  <Border Style="{StaticResource Card}" Margin="0" VerticalAlignment="Top">
+                    <StackPanel>
+                      <DockPanel>
+                        <TextBlock x:Name="DetailsInputCount" DockPanel.Dock="Right" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="Details" FontWeight="SemiBold" />
+                      </DockPanel>
+                      <TextBox x:Name="DetailsInput" AutomationProperties.Name="Presence details" TextChanged="EditorChanged" />
+                      <DockPanel>
+                        <TextBlock x:Name="StateInputCount" DockPanel.Dock="Right" Foreground="{DynamicResource MutedBrush}" FontSize="11" />
+                        <TextBlock Text="State" FontWeight="SemiBold" />
+                      </DockPanel>
+                      <TextBox x:Name="StateInput" AutomationProperties.Name="Presence state" TextChanged="EditorChanged" />
+                      <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,2,0,16" />
+                      <TextBlock Text="Timer" FontWeight="SemiBold" Margin="0,0,0,12" />
+                      <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                        <RadioButton x:Name="ElapsedMode" Style="{StaticResource TimerSegment}" Content="Elapsed Time" GroupName="Timer" IsChecked="True" Checked="EditorChanged" />
+                        <RadioButton x:Name="CountdownMode" Style="{StaticResource TimerSegment}" Content="Countdown" GroupName="Timer" Margin="4,0,0,0" Checked="EditorChanged" />
+                      </StackPanel>
+                      <StackPanel x:Name="ElapsedOptions">
+                        <CheckBox x:Name="CustomStartInput" Content="Use a custom start time" Checked="EditorChanged" Unchecked="EditorChanged" />
+                        <StackPanel x:Name="CustomStartOptions" Visibility="Collapsed">
+                          <TextBlock Text="Local start time" />
+                          <TextBox x:Name="CustomStartTimeInput" AutomationProperties.Name="Custom start time in local time" ToolTip="For example: 2026-10-03 18:30" TextChanged="EditorChanged" />
+                        </StackPanel>
+                      </StackPanel>
+                      <StackPanel x:Name="CountdownOptions" Visibility="Collapsed">
+                        <Grid Margin="0,0,0,10">
+                          <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                          <TextBlock Text="Duration" Foreground="{DynamicResource MutedBrush}" VerticalAlignment="Center" />
+                          <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="12,0,20,0">
+                            <TextBlock x:Name="CountdownHoursLabel" Text="1 hr" MinWidth="42" TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="Countdown hours" />
+                            <StackPanel>
+                              <RepeatButton x:Name="CountdownHoursUp" Tag="HoursUp" Click="CountdownStepClicked" Style="{StaticResource CountdownArrow}" AutomationProperties.Name="Increase countdown hours" />
+                              <RepeatButton x:Name="CountdownHoursDown" Tag="HoursDown" Click="CountdownStepClicked" Style="{StaticResource CountdownArrow}" AutomationProperties.Name="Decrease countdown hours" />
+                            </StackPanel>
+                          </StackPanel>
+                          <StackPanel Grid.Column="2" Orientation="Horizontal">
+                            <TextBlock x:Name="CountdownMinutesLabel" Text="0 min" MinWidth="50" TextAlignment="Right" VerticalAlignment="Center" Margin="0,0,8,0" AutomationProperties.Name="Countdown minutes" />
+                            <StackPanel>
+                              <RepeatButton x:Name="CountdownMinutesUp" Tag="MinutesUp" Click="CountdownStepClicked" Style="{StaticResource CountdownArrow}" AutomationProperties.Name="Increase countdown minutes" />
+                              <RepeatButton x:Name="CountdownMinutesDown" Tag="MinutesDown" Click="CountdownStepClicked" Style="{StaticResource CountdownArrow}" AutomationProperties.Name="Decrease countdown minutes" />
+                            </StackPanel>
+                          </StackPanel>
+                        </Grid>
+                        <!-- Retain the existing total-minutes draft format; the user edits it with steppers. -->
+                        <TextBox x:Name="DurationInput" Text="60" Visibility="Collapsed" TextChanged="EditorChanged" />
+                        <TextBlock x:Name="CountdownHelp" Text="Discord will count down from this duration when the presence is applied." Style="{StaticResource Caption}" Margin="0,0,0,8" />
+                        <TextBlock x:Name="CountdownError" Foreground="{DynamicResource ErrorBrush}" FontSize="12" Margin="0,0,0,8" Visibility="Collapsed" />
+                        <CheckBox x:Name="AutoDisableInput" Content="Disable presence when timer ends" Checked="EditorChanged" Unchecked="EditorChanged" />
+                      </StackPanel>
+                      <TextBlock x:Name="TimerHelp" Foreground="{DynamicResource MutedBrush}" FontSize="12" />
+                    </StackPanel>
+                  </Border>
+                </StackPanel>
+                <StackPanel x:Name="PreviewPane" Grid.Row="1" Margin="0,26,0,0">
+                  <TextBlock Text="Live Preview" FontWeight="SemiBold" />
+                  <TextBlock Text="Updates instantly as you make changes." Style="{StaticResource Caption}" Margin="0,4,0,18" />
+                  <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="20" Margin="0" VerticalAlignment="Top">
+                    <Grid>
+                      <Grid.RowDefinitions>
+                        <RowDefinition Height="4" />
+                        <RowDefinition Height="*" />
+                      </Grid.RowDefinitions>
+                      <Border Background="{StaticResource BrandGradient}" CornerRadius="20,20,0,0" />
+                      <StackPanel Grid.Row="1" Margin="20">
+                        <TextBlock Text="DISCORD PREVIEW" FontSize="11" FontWeight="SemiBold" Foreground="{DynamicResource MutedBrush}" Margin="0,0,0,12" />
+                        <Border Background="{DynamicResource PreviewBrush}" CornerRadius="14" Padding="18">
+                          <StackPanel>
+                            <TextBlock Text="Playing" FontWeight="SemiBold" Margin="0,0,0,16" />
+                            <Grid>
+                              <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="88" />
+                                <ColumnDefinition Width="*" />
+                              </Grid.ColumnDefinitions>
+                              <Grid x:Name="PreviewArtwork" Width="84" Height="84" VerticalAlignment="Top" MouseLeave="PreviewArtworkHoverChanged">
+                                <Rectangle x:Name="PreviewEmptyImage" Width="76" Height="76" HorizontalAlignment="Left" VerticalAlignment="Top" Margin="1" RadiusX="12" RadiusY="12" Stroke="{DynamicResource MutedBrush}" StrokeThickness="1" StrokeDashArray="1,4" StrokeDashCap="Round" IsHitTestVisible="False" />
+                                <Border x:Name="PreviewLargeHitRegion" Width="76" Height="76" HorizontalAlignment="Left" VerticalAlignment="Top" Background="Transparent" CornerRadius="12" MouseEnter="PreviewArtworkHoverChanged" MouseLeave="PreviewArtworkHoverChanged">
+                                  <Image x:Name="PreviewLargeImage" Stretch="UniformToFill" IsHitTestVisible="False" />
+                                </Border>
+                                <Border x:Name="PreviewSmallBadge" MouseEnter="PreviewArtworkHoverChanged" MouseLeave="PreviewArtworkHoverChanged" Width="28" Height="28" Background="{DynamicResource SurfaceBrush}" CornerRadius="14" HorizontalAlignment="Right" VerticalAlignment="Bottom" Visibility="Collapsed">
+                                  <Image x:Name="PreviewSmallImage" Stretch="UniformToFill">
+                                    <Image.Clip>
+                                      <EllipseGeometry Center="14,14" RadiusX="14" RadiusY="14" />
+                                    </Image.Clip>
+                                  </Image>
+                                </Border>
+                                <Popup x:Name="PreviewHoverPopup" Placement="Top" PlacementTarget="{Binding ElementName=PreviewLargeHitRegion}" VerticalOffset="-6" AllowsTransparency="True" StaysOpen="True" Focusable="False" IsHitTestVisible="False">
+                                  <Border Background="{DynamicResource SurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="10,6" MaxWidth="240">
+                                    <TextBlock x:Name="PreviewHoverText" Foreground="{DynamicResource PrimaryBrush}" FontSize="12" FontWeight="Medium" TextWrapping="Wrap" TextAlignment="Center" />
+                                  </Border>
+                                </Popup>
+                              </Grid>
+                              <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                                <TextBlock Text="Lumaunt" FontSize="17" FontWeight="SemiBold" />
+                                <TextBlock x:Name="PreviewDetails" Margin="0,3,0,0" />
+                                <TextBlock x:Name="PreviewState" Margin="0,3,0,0" />
+                                <TextBlock x:Name="PreviewTimer" Foreground="{DynamicResource MutedBrush}" FontSize="12" Margin="0,6,0,0" />
+                              </StackPanel>
+                            </Grid>
+                            <StackPanel x:Name="PreviewButtons" Margin="0,16,0,0" />
+                          </StackPanel>
+                        </Border>
+                      </StackPanel>
+                    </Grid>
+                  </Border>
+                </StackPanel>
+              </Grid>
+            </Grid>
+            <StackPanel x:Name="ImagesPage" Visibility="Collapsed" MaxWidth="980" HorizontalAlignment="Stretch">
+              <TextBlock Text="Images" Style="{StaticResource PageHeading}" />
+              <TextBlock Text="Customize the artwork displayed with your Discord Rich Presence." Style="{StaticResource PageSubtitle}" />
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="♧  Image Privacy" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <CheckBox x:Name="UploadsOnImages" Content="Allow local images to be uploaded when I apply a presence" Checked="SettingsChanged" Unchecked="SettingsChanged" />
+                  <TextBlock Text="Discord needs a public image URL. Anyone with that URL can view the image. Selecting or pasting an image keeps it on this PC until you apply. Turning uploads off does not delete existing uploads." Style="{StaticResource Caption}" />
+                  <WrapPanel Margin="0,16,0,12">
+                    <TextBlock Text="Delete new uploads after" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <ComboBox x:Name="RetentionOnImages" SelectionChanged="SettingsChanged" Width="116" AutomationProperties.Name="Hosted image retention">
+                      <ComboBoxItem Content="7 days" />
+                      <ComboBoxItem Content="30 days" />
+                      <ComboBoxItem Content="90 days" />
+                    </ComboBox>
+                  </WrapPanel>
+                  <TextBlock Text="Expiry starts when an image is uploaded; daily cleanup deletes it within 24 hours of expiry. This applies to new uploads. An expired image can disappear from Discord; apply the local image again to upload a fresh copy. Other services may keep copies of public images." Style="{StaticResource Caption}" />
+                  <TextBlock x:Name="HostedSummaryOnImages" FontSize="12" Margin="0,12,0,10" />
+                  <Button Content="Delete My Hosted Images…" Click="DeleteAllHostedClicked" HorizontalAlignment="Left" Style="{StaticResource CompactButton}" />
+                  <TextBlock Text="Deletion controls cover uploads made by this Windows installation. Older uploads and images hosted elsewhere cannot be deleted here." Style="{StaticResource Caption}" Margin="0,8,0,0" />
+                </StackPanel>
+              </Border>
+              <TextBlock Text="Large Image" FontWeight="SemiBold" />
+              <TextBlock Text="The main artwork displayed on your Discord presence." Style="{StaticResource Caption}" Margin="0,4,0,14" />
+              <Border Style="{StaticResource Card}" Margin="0,0,0,28">
+                <StackPanel AllowDrop="True" Drop="ImageDropped" DragOver="ImageDragOver" Tag="Large">
+                  <Button x:Name="LargeEmpty" Tag="Large" Click="ChooseImageClicked" Style="{StaticResource EmptyImageBox}" AutomationProperties.Name="Choose large image" ToolTip="Click to choose an image, or drag and drop one here" />
+                  <Grid x:Name="LargeSelected" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="140" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image x:Name="LargeThumbnail" Width="120" Height="120" Stretch="Uniform" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="18,0,0,0">
+                      <TextBlock x:Name="LargeFileName" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                      <TextBlock x:Name="LargeSourceLabel" Style="{StaticResource Caption}" Margin="0,4,0,10" />
+                      <WrapPanel>
+                        <Button Content="↻  Replace" Tag="Large" Click="ChooseImageClicked" Style="{StaticResource CompactButton}" Margin="0,0,8,0" />
+                        <Button Content="Remove" Tag="Large" Click="RemoveImageClicked" Style="{StaticResource CompactButton}" />
+                        <Button Content="Use URL" Tag="Large" Click="UseImageUrlClicked" Style="{StaticResource CompactButton}" Margin="8,0,0,0" />
+                      </WrapPanel>
+                    </StackPanel>
+                  </Grid>
+                  <TextBox x:Name="LargeImageInput" AutomationProperties.Name="Large image asset, URL or file" Visibility="Collapsed" TextChanged="EditorChanged" />
+                  <WrapPanel Margin="0,16,0,16">
+                    <Button Content="Paste Image" Tag="Large" Click="PasteImageClicked" Style="{StaticResource CompactButton}" Margin="0,0,10,0" />
+                    <Button Content="Use Image URL" Tag="Large" Click="UseImageUrlClicked" Style="{StaticResource CompactButton}" />
+                  </WrapPanel>
+                  <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,14" />
+                  <DockPanel>
+                    <TextBlock x:Name="LargeTextInputCount" DockPanel.Dock="Right" Style="{StaticResource Caption}" />
+                    <TextBlock Text="Hover Text" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBox x:Name="LargeTextInput" AutomationProperties.Name="Large image hover text" TextChanged="EditorChanged" Margin="0,6,0,0" />
+                </StackPanel>
+              </Border>
+              <TextBlock Text="Small Image" FontWeight="SemiBold" />
+              <TextBlock Text="Optional artwork displayed over the corner of the large image." Style="{StaticResource Caption}" Margin="0,4,0,14" />
+              <Border Style="{StaticResource Card}" Margin="0,0,0,28">
+                <StackPanel AllowDrop="True" Drop="ImageDropped" DragOver="ImageDragOver" Tag="Small">
+                  <Button x:Name="SmallEmpty" Tag="Small" Click="ChooseImageClicked" Style="{StaticResource EmptyImageBox}" AutomationProperties.Name="Choose small image" ToolTip="Click to choose an image, or drag and drop one here" />
+                  <Grid x:Name="SmallSelected" Visibility="Collapsed">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="140" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Image x:Name="SmallThumbnail" Width="120" Height="120" Stretch="Uniform" />
+                    <StackPanel Grid.Column="1" VerticalAlignment="Center" Margin="18,0,0,0">
+                      <TextBlock x:Name="SmallFileName" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" TextWrapping="NoWrap" />
+                      <TextBlock x:Name="SmallSourceLabel" Style="{StaticResource Caption}" Margin="0,4,0,10" />
+                      <WrapPanel>
+                        <Button Content="↻  Replace" Tag="Small" Click="ChooseImageClicked" Style="{StaticResource CompactButton}" Margin="0,0,8,0" />
+                        <Button Content="Remove" Tag="Small" Click="RemoveImageClicked" Style="{StaticResource CompactButton}" />
+                        <Button Content="Use URL" Tag="Small" Click="UseImageUrlClicked" Style="{StaticResource CompactButton}" Margin="8,0,0,0" />
+                      </WrapPanel>
+                    </StackPanel>
+                  </Grid>
+                  <TextBox x:Name="SmallImageInput" AutomationProperties.Name="Small image asset, URL or file" Visibility="Collapsed" TextChanged="EditorChanged" />
+                  <WrapPanel Margin="0,16,0,16">
+                    <Button Content="Paste Image" Tag="Small" Click="PasteImageClicked" Style="{StaticResource CompactButton}" Margin="0,0,10,0" />
+                    <Button Content="Use Image URL" Tag="Small" Click="UseImageUrlClicked" Style="{StaticResource CompactButton}" />
+                  </WrapPanel>
+                  <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,14" />
+                  <DockPanel>
+                    <TextBlock x:Name="SmallTextInputCount" DockPanel.Dock="Right" Style="{StaticResource Caption}" />
+                    <TextBlock Text="Hover Text" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBox x:Name="SmallTextInput" AutomationProperties.Name="Small image hover text" TextChanged="EditorChanged" Margin="0,6,0,0" />
+                </StackPanel>
+              </Border>
+              <TextBlock Text="PNG, JPEG and WebP · up to 4096 × 4096 · optimized to 1024 pixels before upload." Style="{StaticResource Caption}" />
+            </StackPanel>
+            <StackPanel x:Name="ButtonsPage" Visibility="Collapsed" MaxWidth="980" HorizontalAlignment="Stretch">
+              <TextBlock Text="Buttons" Style="{StaticResource PageHeading}" />
+              <TextBlock Text="Add links people can open directly from your Discord presence." Style="{StaticResource PageSubtitle}" />
+              <Border x:Name="ButtonsEmpty" Style="{StaticResource Card}" Padding="30,60">
+                <StackPanel HorizontalAlignment="Center">
+                  <TextBlock Text="&#xE71B;" FontFamily="Segoe MDL2 Assets" FontSize="36" Foreground="#7295FF" HorizontalAlignment="Center" />
+                  <TextBlock Text="Add a presence button" FontWeight="SemiBold" HorizontalAlignment="Center" Margin="0,16,0,8" />
+                  <TextBlock Text="Give people a link they can open directly from your presence." Style="{StaticResource Caption}" TextAlignment="Center" />
+                  <Button Content="＋ Add Button" Click="AddButtonClicked" Background="#096FCF" Foreground="White" HorizontalAlignment="Center" Margin="0,20,0,12" />
+                  <TextBlock Text="You can add up to 2 buttons." Style="{StaticResource Caption}" HorizontalAlignment="Center" />
+                </StackPanel>
+              </Border>
+              <Border x:Name="Button1Card" Style="{StaticResource Card}" Margin="0,0,0,20" Visibility="Collapsed">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,16">
+                    <WrapPanel DockPanel.Dock="Right">
+                      <Button x:Name="Button1Up" Content="↑" Tag="1" Click="SwapButtonsClicked" Style="{StaticResource CompactButton}" AutomationProperties.Name="Move button 1 up" Margin="0,0,6,0" />
+                      <Button x:Name="Button1Down" Content="↓" Tag="1" Click="SwapButtonsClicked" Style="{StaticResource CompactButton}" AutomationProperties.Name="Move button 1 down" Margin="0,0,6,0" />
+                      <Button Content="Remove" Tag="1" Click="RemoveButtonClicked" Style="{StaticResource CompactButton}" />
+                    </WrapPanel>
+                    <TextBlock Text="↗  Button 1" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </DockPanel>
+                  <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,18" />
+                  <DockPanel>
+                    <TextBlock x:Name="Button1LabelCount" DockPanel.Dock="Right" Style="{StaticResource Caption}" />
+                    <TextBlock Text="Label" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBox x:Name="Button1Label" TextChanged="EditorChanged" AutomationProperties.Name="Button 1 label" Margin="0,6,0,6" />
+                  <TextBlock Text="This is the text people will see on the button." Style="{StaticResource Caption}" Margin="0,0,0,20" />
+                  <DockPanel>
+                    <TextBlock x:Name="Button1Validity" DockPanel.Dock="Right" FontSize="12" />
+                    <TextBlock Text="URL" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBox x:Name="Button1Url" TextChanged="EditorChanged" AutomationProperties.Name="Button 1 URL" Margin="0,6,0,6" />
+                  <TextBlock Text="Enter a complete http:// or https:// link." Style="{StaticResource Caption}" />
+                </StackPanel>
+              </Border>
+              <Border x:Name="Button2Card" Style="{StaticResource Card}" Margin="0,0,0,20" Visibility="Collapsed">
+                <StackPanel>
+                  <DockPanel Margin="0,0,0,16">
+                    <WrapPanel DockPanel.Dock="Right">
+                      <Button x:Name="Button2Up" Content="↑" Tag="2" Click="SwapButtonsClicked" Style="{StaticResource CompactButton}" AutomationProperties.Name="Move button 2 up" Margin="0,0,6,0" />
+                      <Button x:Name="Button2Down" Content="↓" Tag="2" Click="SwapButtonsClicked" Style="{StaticResource CompactButton}" AutomationProperties.Name="Move button 2 down" Margin="0,0,6,0" />
+                      <Button Content="Remove" Tag="2" Click="RemoveButtonClicked" Style="{StaticResource CompactButton}" />
+                    </WrapPanel>
+                    <TextBlock Text="↗  Button 2" FontWeight="SemiBold" VerticalAlignment="Center" />
+                  </DockPanel>
+                  <Border Height="1" Background="{DynamicResource BorderBrush}" Margin="0,0,0,18" />
+                  <DockPanel>
+                    <TextBlock x:Name="Button2LabelCount" DockPanel.Dock="Right" Style="{StaticResource Caption}" />
+                    <TextBlock Text="Label" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBox x:Name="Button2Label" TextChanged="EditorChanged" AutomationProperties.Name="Button 2 label" Margin="0,6,0,6" />
+                  <TextBlock Text="This is the text people will see on the button." Style="{StaticResource Caption}" Margin="0,0,0,20" />
+                  <DockPanel>
+                    <TextBlock x:Name="Button2Validity" DockPanel.Dock="Right" FontSize="12" />
+                    <TextBlock Text="URL" FontWeight="SemiBold" />
+                  </DockPanel>
+                  <TextBox x:Name="Button2Url" TextChanged="EditorChanged" AutomationProperties.Name="Button 2 URL" Margin="0,6,0,6" />
+                  <TextBlock Text="Enter a complete http:// or https:// link." Style="{StaticResource Caption}" />
+                </StackPanel>
+              </Border>
+              <Button x:Name="AddButtonControl" Content="＋ Add Button" Click="AddButtonClicked" Style="{StaticResource CompactButton}" HorizontalAlignment="Left" Visibility="Collapsed" />
+              <TextBlock x:Name="ButtonLimit" Style="{StaticResource Caption}" Margin="0,12,0,0" />
+            </StackPanel>
+            <StackPanel x:Name="PresetsPage" Visibility="Collapsed" MaxWidth="1120" HorizontalAlignment="Stretch">
+              <DockPanel>
+                <Button Content="＋ New Preset" Click="NewPresetClicked" DockPanel.Dock="Right" Style="{StaticResource CompactButton}" Background="#096FCF" Foreground="White" />
+                <TextBlock Text="Presets" Style="{StaticResource PageHeading}" />
+              </DockPanel>
+              <TextBlock Text="Save your favorite Rich Presence setups and switch between them instantly." Style="{StaticResource PageSubtitle}" />
+              <TextBox x:Name="PresetSearch" TextChanged="PresetSearchChanged" AutomationProperties.Name="Search presets" ToolTip="Search presets" />
+              <Border x:Name="PresetEditor" Style="{StaticResource Card}" Margin="0,0,0,20" Visibility="Collapsed">
+                <StackPanel>
+                  <TextBlock Text="Preset name" FontWeight="SemiBold" />
+                  <TextBox x:Name="PresetName" AutomationProperties.Name="Preset name" />
+                  <WrapPanel>
+                    <Button x:Name="SavePresetControl" Content="Save current configuration" Click="SavePresetClicked" Style="{StaticResource CompactButton}" Margin="0,0,8,0" />
+                    <Button x:Name="RenamePresetControl" Visibility="Collapsed" Content="Rename" Click="RenamePresetClicked" Style="{StaticResource CompactButton}" Margin="0,0,8,0" />
+                    <Button Content="Cancel" Click="CancelPresetEditClicked" Style="{StaticResource CompactButton}" />
+                  </WrapPanel>
+                </StackPanel>
+              </Border>
+              <ListBox x:Name="PresetsList" Background="Transparent" BorderThickness="0" Foreground="{DynamicResource PrimaryBrush}" HorizontalContentAlignment="Stretch" ScrollViewer.VerticalScrollBarVisibility="Disabled" AutomationProperties.Name="Saved presence presets">
+                <ListBox.ItemContainerStyle>
+                  <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="Padding" Value="0" />
+                    <Setter Property="Margin" Value="0,0,0,14" />
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="BorderBrush" Value="Transparent" />
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                          <Border x:Name="PresetRow" Background="Transparent" BorderBrush="Transparent" BorderThickness="1" CornerRadius="20">
+                            <ContentPresenter HorizontalAlignment="Stretch" />
+                          </Border>
+                          <ControlTemplate.Triggers>
+                            <Trigger Property="IsKeyboardFocusWithin" Value="True"><Setter TargetName="PresetRow" Property="BorderBrush" Value="#5BD8FA" /></Trigger>
+                          </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate>
+                  <DataTemplate>
+                    <Border Style="{StaticResource Card}">
+                      <Grid>
+                        <Grid.ColumnDefinitions>
+                          <ColumnDefinition Width="76" />
+                          <ColumnDefinition Width="*" />
+                          <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <Image Source="Assets/Lumaunt.png" Width="60" Height="60" Tag="{Binding Configuration.LargeImage}" Loaded="PresetArtworkLoaded" AutomationProperties.Name="Preset artwork" />
+                        <StackPanel Grid.Column="1" Margin="10,0,18,0">
+                          <TextBlock Text="{Binding Name}" FontWeight="SemiBold" />
+                          <TextBlock Text="{Binding Configuration.Details}" Margin="0,5,0,3" />
+                          <TextBlock Text="{Binding Configuration.State}" Style="{StaticResource Caption}" />
+                          <TextBlock Text="{Binding Configuration.TimerMode}" Style="{StaticResource Caption}" Margin="0,6,0,0" />
+                        </StackPanel>
+                        <WrapPanel Grid.Column="2" VerticalAlignment="Center">
+                          <Button Content="Apply" IsEnabled="{Binding IsEnabled, ElementName=ApplyButton}" Tag="{Binding}" Click="PresetCardApplyClicked" Style="{StaticResource CompactButton}" Background="#096FCF" Foreground="White" Margin="0,0,8,0" />
+                          <Button Content="Load" Tag="{Binding}" Click="PresetCardLoadClicked" Style="{StaticResource CompactButton}" Margin="0,0,8,0" />
+                          <Button Content="⋯" Tag="{Binding}" Click="PresetMenuClicked" Style="{StaticResource CompactButton}" AutomationProperties.Name="Preset actions" />
+                        </WrapPanel>
+                      </Grid>
+                    </Border>
+                  </DataTemplate>
+                </ListBox.ItemTemplate>
+              </ListBox>
+              <TextBlock x:Name="PresetEmpty" Text="No presets yet. Save your current configuration to get started." Style="{StaticResource Caption}" Margin="0,12,0,16" />
+            </StackPanel>
+            <StackPanel x:Name="SettingsPage" Visibility="Collapsed" MaxWidth="980" HorizontalAlignment="Stretch">
+              <TextBlock Text="Settings" Style="{StaticResource PageHeading}" />
+              <TextBlock Text="Customize how Lumaunt behaves on your PC." Style="{StaticResource PageSubtitle}" />
+              <StackPanel Margin="0,0,0,26">
+                <TextBlock Text="Appearance" FontWeight="SemiBold" />
+                <TextBlock Text="Color scheme" Margin="0,12,0,6" />
+                <ComboBox x:Name="ThemeInput" SelectionChanged="SettingsChanged" Width="160" HorizontalAlignment="Left" AutomationProperties.Name="Color theme">
+                  <ComboBoxItem Content="Dark" />
+                  <ComboBoxItem Content="Light" />
+                  <ComboBoxItem Content="System" />
+                </ComboBox>
+                <TextBlock Text="Keyboard: Ctrl+1–5 opens a section. Ctrl+Enter applies your presence; Ctrl+Shift+Enter disables it. Use Tab and Shift+Tab to move through controls." Style="{StaticResource Caption}" Margin="0,16,0,0" />
+              </StackPanel>
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="♧  Image Privacy" FontWeight="SemiBold" Margin="0,0,0,6" />
+                  <CheckBox x:Name="UploadsInput" Content="Allow local images to be uploaded when I apply a presence" Checked="SettingsChanged" Unchecked="SettingsChanged" />
+                  <TextBlock Text="Discord needs a public image URL. Anyone with that URL can view the image. Selecting or pasting an image keeps it on this PC until you apply. Turning uploads off does not delete existing uploads." Style="{StaticResource Caption}" />
+                  <WrapPanel Margin="0,16,0,12">
+                    <TextBlock Text="Delete new uploads after" VerticalAlignment="Center" Margin="0,0,12,0" />
+                    <ComboBox x:Name="RetentionInput" SelectionChanged="SettingsChanged" Width="116" AutomationProperties.Name="Hosted image retention">
+                      <ComboBoxItem Content="7 days" />
+                      <ComboBoxItem Content="30 days" />
+                      <ComboBoxItem Content="90 days" />
+                    </ComboBox>
+                  </WrapPanel>
+                  <TextBlock Text="Expiry starts when an image is uploaded; daily cleanup deletes it within 24 hours of expiry. This applies to new uploads. An expired image can disappear from Discord; apply the local image again to upload a fresh copy. Other services may keep copies of public images." Style="{StaticResource Caption}" />
+                  <TextBlock x:Name="HostedSummaryInput" FontSize="12" Margin="0,12,0,10" />
+                  <Button Content="Delete My Hosted Images…" Click="DeleteAllHostedClicked" HorizontalAlignment="Left" Style="{StaticResource CompactButton}" />
+                  <TextBlock Text="Deletion controls cover uploads made by this Windows installation. Older uploads and images hosted elsewhere cannot be deleted here." Style="{StaticResource Caption}" Margin="0,8,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="⚙  General" FontWeight="SemiBold" Margin="0,0,0,12" />
+                  <CheckBox x:Name="LaunchInput" Content="Launch Lumaunt at sign-in" Checked="SettingsChanged" Unchecked="SettingsChanged" />
+                  <TextBlock Text="Automatically start Lumaunt when you sign in to Windows." Style="{StaticResource Caption}" />
+                  <Border Style="{StaticResource Divider}" />
+                  <CheckBox x:Name="HideApplyInput" Content="Hide to the system tray after applying" Checked="SettingsChanged" Unchecked="SettingsChanged" />
+                  <TextBlock Text="Hide the main window after you successfully apply a presence." Style="{StaticResource Caption}" />
+                  <TextBlock Text="Quit from the tray menu to fully close Lumaunt." Style="{StaticResource Caption}" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="✦  Presence" FontWeight="SemiBold" Margin="0,0,0,12" />
+                  <CheckBox x:Name="RestoreInput" Content="Restore last presence on launch" Checked="SettingsChanged" Unchecked="SettingsChanged" />
+                  <TextBlock Text="Automatically reapply your most recently used presence when Lumaunt starts and Discord becomes available." Style="{StaticResource Caption}" />
+                  <Border Style="{StaticResource Divider}" />
+                  <CheckBox x:Name="ClearQuitInput" Content="Clear presence when quitting" Checked="SettingsChanged" Unchecked="SettingsChanged" />
+                  <TextBlock Text="Ask Discord to clear your presence before the connection shuts down. Discord may remove it after disconnect even when this is off." Style="{StaticResource Caption}" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="◉  Discord" FontWeight="SemiBold" Margin="0,0,0,16" />
+                  <DockPanel>
+                    <Button x:Name="SettingsDisconnect" DockPanel.Dock="Right" Content="Connect Discord" Click="SettingsAccountClicked" Style="{StaticResource CompactButton}" />
+                    <StackPanel Orientation="Horizontal">
+                      <Image Source="{Binding Source, ElementName=AccountAvatar}" Width="40" Height="40" Margin="0,0,12,0" />
+                      <StackPanel>
+                        <TextBlock Text="{Binding Text, ElementName=AccountName}" FontWeight="SemiBold" />
+                        <TextBlock Text="{Binding Text, ElementName=ConnectionStatus}" Style="{StaticResource Caption}" />
+                        <TextBlock Text="{Binding Text, ElementName=AccountUsername}" Style="{StaticResource Caption}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </DockPanel>
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="▱  Images &amp; Storage" FontWeight="SemiBold" Margin="0,0,0,16" />
+                  <TextBlock Text="Local image storage" FontWeight="SemiBold" />
+                  <TextBlock x:Name="StorageSummary" Style="{StaticResource Caption}" />
+                  <Border Style="{StaticResource Divider}" />
+                  <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Clear Cache…" Click="ClearUploadCacheClicked" Style="{StaticResource CompactButton}" />
+                    <StackPanel>
+                      <TextBlock Text="Upload cache" FontWeight="SemiBold" />
+                      <TextBlock x:Name="CacheSummary" Style="{StaticResource Caption}" />
+                    </StackPanel>
+                  </DockPanel>
+                  <TextBlock Text="Clearing the cache removes locally stored Lumaunt images and the upload cache. Hosted images and deletion ownership records are kept." Style="{StaticResource Caption}" Margin="0,12,0,0" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Card}" Margin="0,0,0,24">
+                <StackPanel>
+                  <TextBlock Text="♧  Privacy" FontWeight="SemiBold" Margin="0,0,0,12" />
+                  <TextBlock x:Name="CrashReportingStatus" Style="{StaticResource Caption}" Margin="0,0,0,8"/><CheckBox x:Name="CrashReportsInput" Content="Share Crash Reports" Checked="SettingsChanged" Unchecked="SettingsChanged" /><TextBlock Text="Automatically send sanitized crash diagnostics to Lumaunt’s Sentry project when enabled. Reports exclude credentials, presence content, moderation text and image URLs. No performance tracing or usage analytics." Style="{StaticResource Caption}" />
+                </StackPanel>
+              </Border>
+              <Border Style="{StaticResource Card}">
+                <StackPanel>
+                  <TextBlock Text="ⓘ  About" FontWeight="SemiBold" Margin="0,0,0,18" />
+                  <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Website" Click="WebsiteClicked" Style="{StaticResource CompactButton}" />
+                    <StackPanel Orientation="Horizontal">
+                      <Image Source="Assets/Lumaunt.png" Width="40" Height="40" Margin="0,0,14,0" />
+                      <StackPanel>
+                        <TextBlock Text="Lumaunt" FontWeight="SemiBold" />
+                        <TextBlock Text="Windows · Version 1.0.0" Style="{StaticResource Caption}" />
+                      </StackPanel>
+                    </StackPanel>
+                  </DockPanel>
+                  <Border Style="{StaticResource Divider}" />
+                  <TextBlock Text="Create and manage custom Discord Rich Presence configurations from Windows." Style="{StaticResource Caption}" />
+                </StackPanel>
+              </Border>
+            </StackPanel>
+            <TextBlock x:Name="ValidationMessage" Foreground="{DynamicResource ErrorBrush}" Margin="0,16,0,0" AutomationProperties.LiveSetting="Polite" />
+          </StackPanel>
+        </ScrollViewer>
+        <Border x:Name="PresenceFooter" Grid.Row="2" Padding="26,14">
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center" Margin="0,0,12,0">
+              <TextBlock x:Name="PresenceStatus" Text="Presence inactive" FontSize="12" />
+              <TextBlock x:Name="ApplyHint" Style="{StaticResource Caption}" Margin="0,4,0,0" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+              <Button x:Name="DisableButton" Content="⊙ Disable" Click="DisableClicked" Visibility="Collapsed" Margin="0,0,10,0" Style="{StaticResource CompactButton}" />
+              <Button x:Name="ApplyButton" Content="Apply Presence" Click="ApplyClicked" IsEnabled="False" Background="{StaticResource BrandGradient}" Foreground="White" Margin="0" Padding="20,10" />
+            </StackPanel>
+          </Grid>
+        </Border>
+      </Grid>
+    </Grid>
+  </Grid>
+</Window>

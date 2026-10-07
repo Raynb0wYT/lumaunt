@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+ xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+ xmlns:uap10="http://schemas.microsoft.com/appx/manifest/uap/windows10/10"
+ xmlns:desktop="http://schemas.microsoft.com/appx/manifest/desktop/windows10"
+ xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+ IgnorableNamespaces="uap uap10 desktop rescap">
+ <Identity Name="@PACKAGE_NAME@" Publisher="@PUBLISHER@" Version="@VERSION@" ProcessorArchitecture="@ARCHITECTURE@" />
+ <Properties>
+  <DisplayName>@DISPLAY_NAME@</DisplayName>
+  <PublisherDisplayName>@PUBLISHER_DISPLAY_NAME@</PublisherDisplayName>
+  <Description>Create and manage Discord Rich Presence with images, buttons, timers and presets.</Description>
+  <Logo>Assets\StoreLogo.png</Logo>
+ </Properties>
+ <Resources><Resource Language="en-us" /></Resources>
+ <Dependencies><TargetDeviceFamily Name="Windows.Desktop" MinVersion="@MIN_VERSION@" MaxVersionTested="10.0.26100.0" /></Dependencies>
+ <Applications>
+  <Application Id="Lumaunt" Executable="Lumaunt.exe" uap10:RuntimeBehavior="packagedClassicApp" uap10:TrustLevel="mediumIL">
+   <uap:VisualElements DisplayName="@DISPLAY_NAME@" Description="Discord Rich Presence for Windows" BackgroundColor="transparent" Square150x150Logo="Assets\Square150x150Logo.png" Square44x44Logo="Assets\Square44x44Logo.png" />
+   <Extensions>
+    <desktop:Extension Category="windows.startupTask" Executable="Lumaunt.exe" EntryPoint="Windows.FullTrustApplication" uap10:Parameters="--tray">
+     <desktop:StartupTask TaskId="LumauntStartup" Enabled="false" DisplayName="Lumaunt" />
+    </desktop:Extension>
+   </Extensions>
+  </Application>
+ </Applications>
+ <Capabilities><rescap:Capability Name="runFullTrust" /></Capabilities>
+</Package>

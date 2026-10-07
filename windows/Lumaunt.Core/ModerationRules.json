@@ -1,0 +1,384 @@
+[
+  {
+    "Category": "hatefulConduct",
+    "Reason": "Racial or ethnic slurs are not allowed.",
+    "Groups": [
+      [
+        "nigger",
+        "niggers",
+        "nigga",
+        "niggas",
+        "coon",
+        "coons",
+        "sambo",
+        "chink",
+        "chinks",
+        "gook",
+        "gooks",
+        "spic",
+        "spics",
+        "wetback",
+        "wetbacks",
+        "sand nigger",
+        "sand niggers",
+        "towelhead",
+        "towelheads",
+        "kike",
+        "kikes"
+      ]
+    ],
+    "Matching": "obfuscatedTerm",
+    "Decision": "block",
+    "Relationship": "anywhere",
+    "Distance": 0
+  },
+  {
+    "Category": "threats",
+    "Reason": "This presence may contain a direct ",
+    "Groups": [
+      [
+        "kill",
+        "murder",
+        "shoot",
+        "stab",
+        "hurt",
+        "attack"
+      ],
+      [
+        "you",
+        "yourself"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "orderedWithinTokens",
+    "Distance": 0
+  },
+  {
+    "Category": "threats",
+    "Reason": "This presence may contain a threat ",
+    "Groups": [
+      [
+        "kill",
+        "murder",
+        "shoot",
+        "stab",
+        "hurt",
+        "attack"
+      ],
+      [
+        "him",
+        "her",
+        "someone",
+        "somebody"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "orderedWithinTokens",
+    "Distance": 0
+  },
+  {
+    "Category": "threats",
+    "Reason": "This presence may contain a threat ",
+    "Groups": [
+      [
+        "kill",
+        "murder",
+        "shoot",
+        "stab",
+        "hurt",
+        "attack"
+      ],
+      [
+        "him",
+        "her",
+        "someone",
+        "somebody"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "orderedWithinTokens",
+    "Distance": 0
+  },
+  {
+    "Category": "hatefulConduct",
+    "Reason": "This presence may contain hateful or ",
+    "Groups": [
+      [
+        "hate",
+        "hates",
+        "hated",
+        "disgusting",
+        "inferior",
+        "subhuman",
+        "vermin"
+      ],
+      [
+        "black people",
+        "white people",
+        "asian people",
+        "latino people",
+        "latina people",
+        "hispanic people",
+        "christians",
+        "muslims",
+        "jews",
+        "jewish people",
+        "hindus",
+        "buddhists",
+        "men",
+        "women",
+        "trans people",
+        "transgender people",
+        "gay people",
+        "lesbians",
+        "bisexual people",
+        "disabled people",
+        "americans",
+        "canadians",
+        "mexicans"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "anywhere",
+    "Distance": 0
+  },
+  {
+    "Category": "hatefulConduct",
+    "Reason": "This presence may advocate exclusion of ",
+    "Groups": [
+      [
+        "ban",
+        "exclude",
+        "remove",
+        "deport",
+        "expel"
+      ],
+      [
+        "black people",
+        "white people",
+        "asian people",
+        "latino people",
+        "latina people",
+        "hispanic people",
+        "christians",
+        "muslims",
+        "jews",
+        "jewish people",
+        "hindus",
+        "buddhists",
+        "men",
+        "women",
+        "trans people",
+        "transgender people",
+        "gay people",
+        "lesbians",
+        "bisexual people",
+        "disabled people"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "withinTokens",
+    "Distance": 5
+  },
+  {
+    "Category": "hatefulConduct",
+    "Reason": "This presence may express racial or ethnic ",
+    "Groups": [
+      [
+        "superior",
+        "better",
+        "inferior",
+        "lesser"
+      ],
+      [
+        "race",
+        "races",
+        "ethnicity",
+        "ethnicities"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "withinTokens",
+    "Distance": 5
+  },
+  {
+    "Category": "hatefulConduct",
+    "Reason": "This presence may contain violence ",
+    "Groups": [
+      [
+        "kill",
+        "kills",
+        "killed",
+        "killing",
+        "murder",
+        "murders",
+        "murdered",
+        "murdering",
+        "shoot",
+        "shoots",
+        "shot",
+        "shooting",
+        "stab",
+        "stabs",
+        "stabbed",
+        "stabbing",
+        "attack",
+        "attacks",
+        "attacked",
+        "attacking",
+        "hurt",
+        "hurting"
+      ],
+      [
+        "black people",
+        "white people",
+        "asian people",
+        "latino people",
+        "latina people",
+        "hispanic people",
+        "christians",
+        "muslims",
+        "jews",
+        "jewish people",
+        "hindus",
+        "buddhists",
+        "men",
+        "women",
+        "trans people",
+        "transgender people",
+        "gay people",
+        "lesbians",
+        "bisexual people",
+        "disabled people"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "withinTokens",
+    "Distance": 5
+  },
+  {
+    "Category": "harassment",
+    "Reason": "This presence may contain targeted ",
+    "Groups": [
+      [
+        "worthless",
+        "pathetic",
+        "disgusting",
+        "repulsive",
+        "useless",
+        "loser",
+        "failure",
+        "idiot",
+        "moron"
+      ],
+      [
+        "you",
+        "your",
+        "youre",
+        "he",
+        "him",
+        "his",
+        "she",
+        "her",
+        "they",
+        "them",
+        "person",
+        "people",
+        "someone",
+        "somebody"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "withinTokens",
+    "Distance": 3
+  },
+  {
+    "Category": "sexualContent",
+    "Reason": "This presence may contain sexually ",
+    "Groups": [
+      [
+        "sex",
+        "sexual",
+        "nude",
+        "nudes",
+        "naked",
+        "porn",
+        "pornography",
+        "intercourse"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "anywhere",
+    "Distance": 0
+  },
+  {
+    "Category": "childSafety",
+    "Reason": "This presence may contain sexual ",
+    "Groups": [
+      [
+        "sex",
+        "sexual",
+        "nude",
+        "nudes",
+        "naked",
+        "porn",
+        "pornography",
+        "explicit"
+      ],
+      [
+        "child",
+        "children",
+        "kid",
+        "kids",
+        "minor",
+        "minors",
+        "underage",
+        "teen",
+        "teenager"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "withinTokens",
+    "Distance": 5
+  },
+  {
+    "Category": "violentExtremism",
+    "Reason": "This presence may contain support ",
+    "Groups": [
+      [
+        "support",
+        "supports",
+        "supporting",
+        "praise",
+        "praises",
+        "glorify",
+        "glorifies",
+        "glorifying",
+        "join",
+        "joining"
+      ],
+      [
+        "terrorist",
+        "terrorists",
+        "terrorism",
+        "extremist",
+        "extremists",
+        "extremism"
+      ]
+    ],
+    "Matching": "wholeTerm",
+    "Decision": "review",
+    "Relationship": "withinTokens",
+    "Distance": 5
+  }
+]

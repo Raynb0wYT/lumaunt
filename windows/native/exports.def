@@ -1,0 +1,13 @@
+LIBRARY lumaunt_discord
+EXPORTS
+    discord_bridge_initialize
+    discord_bridge_run_callbacks
+    discord_bridge_shutdown
+    discord_bridge_connection_generation
+    discord_bridge_get_current_user
+    discord_bridge_authorize
+    discord_bridge_set_status_callback
+    discord_bridge_update_presence
+    discord_bridge_clear_presence
+    discord_bridge_login_with_access_token
+    discord_bridge_login_with_refresh_token

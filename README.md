@@ -81,6 +81,10 @@ For Windows, follow the prerequisites, build commands, and checks in the [Window
 
 Download the Discord Social SDK separately. Some functionality may require additional configuration that is intentionally not included in the repository. Generated builds and installers are distributed through Releases rather than committed as source.
 
+## Rich Presence Not Showing?
+
+Is your Discord rich presence not showing? If it is not, make sure that your Discord activity sharing is enabled. To do this, go to settings, scroll down to "Activity Privacy", and then enable the "Share my Activity" button. If it is still not working, try disconnecting your Discord account and reconnecting it, along with restarting the program. Still having issues? Contact me on Discord: **rayn.f**
+
 ## Support
 
 Visit [Lumaunt Support](https://lumaunt.app/support/) or report bugs through [GitHub Issues](https://github.com/Raynb0wYT/lumaunt/issues).

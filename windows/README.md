@@ -1,6 +1,6 @@
 # Lumaunt for Windows
 
-Windows application source for Lumaunt 1.0.0. The WPF application and its C++ Discord Social SDK bridge live entirely in this directory. The macOS app is separate.
+Windows application source for Lumaunt 1.0.0, available through [GitHub Releases](https://github.com/Raynb0wYT/lumaunt/releases/tag/Windows-1.0.0). The WPF application and its C++ Discord Social SDK bridge live entirely in this directory. The macOS app is separate.
 
 ## Features
 

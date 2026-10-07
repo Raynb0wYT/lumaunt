@@ -2,102 +2,67 @@
 
 **Your Discord presence. Your way.**
 
-Lumaunt is a native macOS application for creating, customizing, and managing your Discord Rich Presence.
+Lumaunt is a desktop application for **macOS and Windows** that lets you create, customize, and manage your Discord Rich Presence.
 
-Built specifically for macOS, Lumaunt provides a simple interface for customizing your presence with text, images, buttons, timers, presets, and more — while keeping privacy and control in mind.
+Customize your presence with text, images, buttons, timers, and presets, with a live preview and controls that keep privacy in your hands.
 
-## ✦ Features
+## Features
 
-- **Custom Discord Rich Presence**
-  - Customize your details and state
-  - Apply and disable your presence at any time
-
-- **Live Presence Preview**
-  - Preview your Rich Presence before applying it to Discord
-
-- **Custom Images**
-  - Large and small presence images
-  - Custom hover text
-  - Image URLs and local image files
-  - Clipboard image support
-
-- **Custom Buttons**
-  - Add up to two buttons with custom labels and URLs
-  - Reorder buttons before applying your presence
-
-- **Timers**
-  - Elapsed time
-  - Countdown timers
-  - Custom start times
-  - Automatically disable your presence when a countdown ends
-
-- **Presets**
-  - Save and reuse your favorite Rich Presence configurations
-  - Search your saved presets
-
-- **Discord Account Connection**
-  - Connect securely using Discord authentication
-  - Your Discord session is stored locally in the macOS Keychain
-
-- **Privacy Controls**
-  - Hosted image uploads are optional
-  - Choose image retention periods
-  - Delete managed hosted images
-  - Optional crash reporting
-
-- **Native macOS Experience**
-  - Apple silicon and Intel Mac support
-  - Light, Dark, and System appearance
-  - Keyboard navigation and shortcuts
-  - Accessibility support
+- **Custom Rich Presence** — edit details and state, apply changes, or disable your presence.
+- **Live preview** — see your configuration as you customize it.
+- **Images and hover text** — add large and small artwork using image URLs, local files, or clipboard images.
+- **Custom buttons** — add up to two links and choose their order.
+- **Timers** — elapsed time, custom start times, and countdowns with optional automatic disabling.
+- **Presets** — save, search, load, apply, rename, duplicate, and delete configurations.
+- **Discord connection** — connect through Discord authentication and restore your locally protected session.
+- **Privacy controls** — opt into hosted image uploads, choose retention periods, delete managed uploads, and control optional crash reporting.
+- **Desktop integration** — account avatars, menu bar or system tray controls, optional launch at login, and presence restoration.
+- **Appearance and navigation** — Light, Dark, and System appearance, responsive layouts, keyboard shortcuts, and accessibility support.
 
 ## Download
 
-The latest version of Lumaunt can be downloaded from the **GitHub Releases** page.
+Choose the file for your computer. All downloads are available on [GitHub Releases](https://github.com/Raynb0wYT/lumaunt/releases).
 
-Download `Lumaunt-1.0.dmg`, open the disk image, and drag **Lumaunt** into your Applications folder.
+| Platform | Download |
+| --- | --- |
+| macOS — Apple silicon and Intel | [Lumaunt 1.0.1 (.dmg)](https://github.com/Raynb0wYT/lumaunt/releases/download/Minor-Release/Lumaunt-1.0.1.dmg) |
+| Windows — Intel and AMD x64 | [Lumaunt 1.0.0 installer](https://github.com/Raynb0wYT/lumaunt/releases/download/Windows-1.0.0/Lumaunt-1.0.0-win-x64-setup.exe) |
+| Windows — ARM64 | [Lumaunt 1.0.0 installer](https://github.com/Raynb0wYT/lumaunt/releases/download/Windows-1.0.0/Lumaunt-1.0.0-win-arm64-setup.exe) |
 
-> **Note**
->
-> Lumaunt is not currently notarized with an Apple Developer ID. Depending on your macOS security settings, macOS may display a security warning when opening the application for the first time.
+### Install on macOS
+
+Open the disk image, drag **Lumaunt** into **Applications**, then open Lumaunt and connect Discord.
+
+Lumaunt is not currently notarized with an Apple Developer ID. macOS may display a security warning on first launch.
+
+### Install on Windows
+
+Run the matching x64 or ARM64 installer, then open Lumaunt and connect Discord.
+
+The Windows installers are currently **unsigned**, so Windows may display a SmartScreen warning. Microsoft Store availability is pending.
 
 ## Requirements
 
-- macOS
-- A Discord account
-- Internet access for Discord authentication and online features
+- A supported macOS or Windows computer.
+- A Discord account.
+- Internet access for authentication and online features.
 
-Lumaunt supports both **Apple silicon** and **Intel-based Macs**.
+macOS builds support Apple silicon and Intel Macs. Windows x64 builds target Windows 10 version 2004 (build 19041) or later; ARM64 builds target Windows 11. Windows 11 has been tested on ARM64 and native x64 hardware. Windows 10 compatibility and sleep/wake recovery still require separate verification. There is no 32-bit Windows or Linux release.
 
 ## Privacy
 
-Lumaunt is designed to keep as much information local to your Mac as practical.
+Lumaunt keeps settings, presets, and Discord authentication credentials on your computer. Credentials are protected using **macOS Keychain** on Mac and **Windows DPAPI** on Windows.
 
-Discord authentication credentials are stored using the macOS Keychain. Some features, such as content moderation and optional hosted images, require communication with Lumaunt's backend and third-party service providers.
+Content moderation and optional hosted images use Lumaunt's backend and third-party service providers. Optional crash reporting is disabled by default.
 
-For complete details, see the Lumaunt Privacy Policy:
+Read the [Privacy Policy](https://lumaunt.app/privacy/) for details.
 
-**https://lumaunt.app/privacy/**
+## Building from source
 
-## Support
+The repository contains separate platform implementations:
 
-Need help, found a bug, or have feedback?
-
-**https://lumaunt.app/support/**
-
-You can also report issues through GitHub Issues.
-
-For privacy-related questions:
-
-**privacy@lumaunt.app**
-
-## Website
-
-**https://lumaunt.app**
-
-## Building from Source
-
-Lumaunt is developed using Swift and SwiftUI for macOS.
+- **macOS:** Swift and SwiftUI in the Xcode project.
+- **Windows:** WPF/.NET and a C++ Discord Social SDK bridge in [`windows/`](windows/).
 
 Clone the repository:
 
@@ -106,29 +71,30 @@ git clone https://github.com/Raynb0wYT/lumaunt.git
 cd lumaunt
 ```
 
-Then open the Xcode project:
+For macOS, open the project in Xcode:
 
 ```bash
 open Lumaunt.xcodeproj
 ```
 
-Some functionality may require additional configuration or credentials that are intentionally not included in the repository.
+For Windows, follow the prerequisites, build commands, and checks in the [Windows build guide](windows/README.md).
+
+Download the Discord Social SDK separately. Some functionality may require additional configuration that is intentionally not included in the repository. Generated builds and installers are distributed through Releases rather than committed as source.
+
+## Support
+
+Visit [Lumaunt Support](https://lumaunt.app/support/) or report bugs through [GitHub Issues](https://github.com/Raynb0wYT/lumaunt/issues).
+
+For privacy-related questions: **privacy@lumaunt.app**.
+
+Website: [lumaunt.app](https://lumaunt.app)
 
 ## Roadmap
 
-Lumaunt 1.0 focuses on providing a polished native Discord Rich Presence experience for macOS.
-
-Future development may include:
-
-- Automatic application updates
-- Additional quality-of-life improvements
-- Windows support
-- Linux support
-- More customization options
+Future development may include automatic updates, additional quality-of-life improvements, more customization options, and Linux support.
 
 ## Disclaimer
 
 Lumaunt is an independent project and is **not affiliated with, endorsed by, or sponsored by Discord Inc.**
 
 Discord and related trademarks are the property of their respective owners.
-\
